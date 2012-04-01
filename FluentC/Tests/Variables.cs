@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using FluentCEngine;
 
 namespace Tests
 {
@@ -12,6 +13,9 @@ namespace Tests
     [TestClass]
     public class Variables
     {
+
+        private Engine Engine{get;set;}
+
         public Variables()
         {
             //
@@ -59,12 +63,43 @@ namespace Tests
         //
         #endregion
 
-        [TestMethod]
-        public void TestMethod1()
+        [TestInitialize]
+        public void Initialize()
         {
-            //
-            // TODO: Add test logic here
-            //
+            Engine = new Engine();
+        }
+
+
+        [TestMethod]
+        public void TestDeclaration()
+        {
+            Engine.Declare("Hello");
+            Assert.IsTrue(Engine.Exists("Hello"));
+            Engine.Declare("Goodbye");
+            Assert.IsTrue(Engine.Exists("Goodbye"));
+            Engine.Declare("The square root of two");
+            Assert.IsTrue(Engine.Exists("The square root of two"));
+            Engine.Declare("2");
+            Assert.IsTrue(Engine.Exists("2"));
+            Engine.Declare("2 peas in a pod");
+            Assert.IsTrue(Engine.Exists("2 peas in a pod"));
+        }
+
+        [TestMethod]
+        public void TestAssignment()
+        {
+            Engine.Declare("Two");
+            Engine.Assign("Two", new Variable() { Data = 2 });
+            Assert.AreEqual(2, Engine.Get("Two").Data);
+            Engine.Declare("Goodbye");
+            Engine.Assign("Goodbye", new Variable() { Data = "World" });
+            Assert.AreEqual("World", Engine.Get("Goodbye").Data);
+        }
+
+        [TestMethod]
+        public void TestDeletion()
+        {
+            Assert.Fail();
         }
     }
 }

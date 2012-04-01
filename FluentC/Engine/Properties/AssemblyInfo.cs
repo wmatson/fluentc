@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Engine")]
+[assembly: AssemblyTitle("FluentCEngine")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Neumont")]
-[assembly: AssemblyProduct("Engine")]
+[assembly: AssemblyProduct("FluentCEngine")]
 [assembly: AssemblyCopyright("Copyright © Neumont 2012")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
