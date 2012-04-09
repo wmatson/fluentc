@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace FluentCEngine
+namespace FluentCEngine.Constructs
 {
+    /// <summary>
+    /// Represents a variable of any type supported by Engine
+    /// </summary>
+    /// <seealso cref="Engine"/>
     public class Variable
     {
 
@@ -14,17 +18,20 @@ namespace FluentCEngine
         {
             get
             {
-                decimal result;
-                if (decimal.TryParse(_data, out result))
+                if (IsNumber)
                 {
-                    return result;
+                    return decimal.Parse(_data);
                 }
                 return _data;
             }
 
             set
             {
-                _data = value.ToString();
+                decimal result;
+                if(!decimal.TryParse(value, out result)) {
+                    Type = VarType.Number;
+                }
+               _data = value.ToString();                
             }
         }
 
@@ -36,6 +43,9 @@ namespace FluentCEngine
 
     }
 
+    /// <summary>
+    /// Represents every type of variable supported by engine
+    /// </summary>
     public enum VarType
     {
         Number, String, Condition

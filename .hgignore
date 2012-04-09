@@ -3,3 +3,6 @@ syntax: regexp
 .*/obj/.*
 .*\.suo
 .*\.trx
+syntax: glob
+Capstone Draft.docx
+Notes.txt

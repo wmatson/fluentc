@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace FluentCEngine
+namespace FluentCEngine.Exceptions
 {
     /// <summary>
     /// An exception to be thrown when there is an attempt to access a variable that does not yet exist
