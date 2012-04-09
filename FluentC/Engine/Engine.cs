@@ -33,7 +33,7 @@ namespace FluentCEngine
         {
             try
             {
-                Variables.Add(variable, null);
+                Variables.Add(variable, new Variable());
             }
             catch
             {
@@ -49,20 +49,20 @@ namespace FluentCEngine
         /// </summary>
         /// <param name="variable">The name of the variable to which to set the value</param>
         /// <param name="value">The value to assign to the variable</param>
-        public void Assign(string variable, Variable value)
+        public void Assign(string variable, dynamic value)
         {
             if (!Exists(variable))
             {
                 Declare(variable);
             }
-            Variables[variable] = value;
+            Variables[variable].Data = value;
         }
 
         /// <summary>
         /// Returns the variable with the given name
         /// </summary>
         /// <param name="variable">the name of the variable to return</param>
-        /// <returns>The value of the variable with the given name</returns>
+        /// <returns>The variable with the given name</returns>
         /// <exception cref="UndeclaredVariableException">the variable with the given name does not exist</exception>
         public Variable Get(string variable)
         {
@@ -71,6 +71,17 @@ namespace FluentCEngine
                 return Variables[variable];
             }
             throw new UndeclaredVariableException(variable);
+        }
+
+        /// <summary>
+        /// Returns the value of the variable with the given name
+        /// </summary>
+        /// <param name="variable">the name of the variable whose value to return</param>
+        /// <returns>the value of the variable with the given name</returns>
+        /// <exception cref="UndeclaredVariableException">the variable with the given name does not exist</exception>
+        public dynamic GetValue(string variable)
+        {
+            return Get(variable).Data;
         }
 
         /// <summary>

@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FluentCEngine;
 using FluentCEngine.Constructs;
+using FluentC;
 
 namespace Tests
 {
@@ -15,7 +16,8 @@ namespace Tests
     public class Variables
     {
 
-        private Engine Engine{get;set;}
+        private Engine Engine { get; set; }
+        private FluentCParser Parser { get; set; }
 
         public Variables()
         {
@@ -68,6 +70,7 @@ namespace Tests
         public void Initialize()
         {
             Engine = new Engine();
+            Parser = new FluentCParser(Engine);
         }
 
 
@@ -90,11 +93,11 @@ namespace Tests
         public void TestAssignment()
         {
             Engine.Declare("Two");
-            Engine.Assign("Two", new Variable() { Data = 2 });
-            Assert.AreEqual(2, Engine.Get("Two").Data);
+            Engine.Assign("Two", 2);
+            Assert.AreEqual(2, Engine.GetValue("Two"));
             Engine.Declare("Goodbye");
-            Engine.Assign("Goodbye", new Variable() { Data = "World" });
-            Assert.AreEqual("World", Engine.Get("Goodbye").Data);
+            Engine.Assign("Goodbye", "World");
+            Assert.AreEqual("World", Engine.GetValue("Goodbye"));
         }
 
         [TestMethod]
@@ -111,7 +114,14 @@ namespace Tests
         [TestMethod]
         public void TestScriptDeclaration()
         {
-            Assert.Fail("Not implemented");
+            Parser.Run("Let x exist.");
+            Assert.IsTrue(Engine.Exists("x"));
+            Parser.Run("Let hello world exist.");
+            Assert.IsTrue(Engine.Exists("hello world"));
+            Parser.Run("Let the square root of two exist.");
+            Assert.IsTrue(Engine.Exists("the square root of two"));
+            Parser.Run("Let 2 exist.");
+            Assert.IsTrue(Engine.Exists("2"));
         }
 
         [TestMethod]

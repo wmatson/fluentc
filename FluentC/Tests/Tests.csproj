@@ -54,6 +54,10 @@
       <Project>{BD61A20F-B5FD-409B-881B-B83C64844480}</Project>
       <Name>Engine</Name>
     </ProjectReference>
+    <ProjectReference Include="..\FluentC\Parser.csproj">
+      <Project>{E907EAD4-35A8-4988-B0C2-E12BC0AAF925}</Project>
+      <Name>Parser</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

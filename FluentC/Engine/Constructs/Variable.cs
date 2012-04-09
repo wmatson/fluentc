@@ -28,8 +28,13 @@ namespace FluentCEngine.Constructs
             set
             {
                 decimal result;
-                if(!decimal.TryParse(value, out result)) {
+                if (decimal.TryParse(value.ToString(), out result))
+                {
                     Type = VarType.Number;
+                }
+                else
+                {
+                    Type = VarType.String;
                 }
                _data = value.ToString();                
             }
