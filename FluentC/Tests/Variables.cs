@@ -127,13 +127,29 @@ namespace Tests
         [TestMethod]
         public void TestScriptAssignment()
         {
-            Assert.Fail("Not implemented");
+            Parser.Run("Let two be 2.");
+            Assert.AreEqual(2, Engine.GetValue("two"));
+            Parser.Run("Let goodbye be \"world\".");
+            Assert.AreEqual("goodbye", Engine.GetValue("goodbye"));
         }
 
         [TestMethod]
         public void TestScriptDeletion()
         {
-            Assert.Fail("Not implemented");
+            Parser.Run("Let x exist.");
+            Assert.IsTrue(Engine.Exists("x"));
+            Parser.Run("Forget x.");
+            Assert.IsFalse(Engine.Exists("x"));
+
+            Parser.Run("Let 2 exist.");
+            Assert.IsTrue(Engine.Exists("2"));
+            Parser.Run("Forget 2.");
+            Assert.IsFalse(Engine.Exists("2"));
+
+            Parser.Run("Let the square root of 2 be 5.");
+            Assert.AreEqual(5, Engine.GetValue("the square root of 2"));
+            Parser.Run("Forget the square root of 2.");
+            Assert.IsFalse(Engine.Exists("the square root of 2"));
         }
     }
 }
