@@ -99,7 +99,30 @@ namespace Tests
         [TestMethod]
         public void TestDeletion()
         {
-            Assert.Fail();
+            Engine.Declare("Two");
+            Assert.IsTrue(Engine.Exists("Two"));
+            Engine.Delete("Two");
+            Assert.IsFalse(Engine.Exists("Two"));
+
+
+        }
+
+        [TestMethod]
+        public void TestScriptDeclaration()
+        {
+            Assert.Fail("Not implemented");
+        }
+
+        [TestMethod]
+        public void TestScriptAssignment()
+        {
+            Assert.Fail("Not implemented");
+        }
+
+        [TestMethod]
+        public void TestScriptDeletion()
+        {
+            Assert.Fail("Not implemented");
         }
     }
 }
