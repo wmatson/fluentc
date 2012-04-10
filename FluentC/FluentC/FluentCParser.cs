@@ -5,6 +5,7 @@ using System.Text;
 using FluentCEngine;
 using System.IO;
 using System.Text.RegularExpressions;
+using FluentCEngine.Helpers;
 
 namespace FluentC
 {
@@ -79,7 +80,10 @@ namespace FluentC
         private dynamic EvaluateExpression(string expression)
         {
             //TODO make this method actually evaluate expressions
-            return Regex.Replace(expression, "\"(.*)\"", e => e.Groups[1].Value);
+            var result = Regex.Replace(expression, "\"(.*)\"", e => e.Groups[1].Value);
+            if(result.IsNumber()) 
+                return decimal.Parse(result);
+            return result;
         }
     }
 }

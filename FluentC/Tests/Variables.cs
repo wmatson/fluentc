@@ -131,6 +131,8 @@ namespace Tests
             Assert.AreEqual(2, Engine.GetValue("two"));
             Parser.Run("Let goodbye be \"world\".");
             Assert.AreEqual("world", Engine.GetValue("goodbye"));
+            Parser.Run("Let a witty saying be \"in development\".");
+            Assert.AreEqual("in development", Engine.GetValue("a witty saying"));
         }
 
         [TestMethod]
@@ -150,6 +152,16 @@ namespace Tests
             Assert.AreEqual(5, Engine.GetValue("the square root of 2"));
             Parser.Run("Forget the square root of 2.");
             Assert.IsFalse(Engine.Exists("the square root of 2"));
+        }
+
+        [TestMethod]
+        public void TestEvaluateSimpleExpression()
+        {
+            var evaluator = new FluentCParser_Accessor();
+            Assert.AreEqual((decimal)2, evaluator.EvaluateExpression("2"));
+            Assert.AreEqual((decimal)2.3, evaluator.EvaluateExpression("2.3"));
+            Assert.AreEqual("Hello", evaluator.EvaluateExpression("\"Hello\""));
+            Assert.AreEqual("Hello world", evaluator.EvaluateExpression("\"Hello world\""));
         }
     }
 }

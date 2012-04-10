@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using FluentCEngine.Helpers;
 
 namespace FluentCEngine.Constructs
 {
@@ -27,8 +28,7 @@ namespace FluentCEngine.Constructs
 
             set
             {
-                decimal result;
-                if (decimal.TryParse(value.ToString(), out result))
+                if (((string)value.ToString()).IsNumber())
                 {
                     Type = VarType.Number;
                 }
