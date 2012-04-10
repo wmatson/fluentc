@@ -130,7 +130,7 @@ namespace Tests
             Parser.Run("Let two be 2.");
             Assert.AreEqual(2, Engine.GetValue("two"));
             Parser.Run("Let goodbye be \"world\".");
-            Assert.AreEqual("goodbye", Engine.GetValue("goodbye"));
+            Assert.AreEqual("world", Engine.GetValue("goodbye"));
         }
 
         [TestMethod]
