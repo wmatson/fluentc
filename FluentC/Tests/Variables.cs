@@ -129,6 +129,10 @@ namespace Tests
         {
             Parser.Run("Let two be 2.");
             Assert.AreEqual(2, Engine.GetValue("two"));
+            Parser.Run("Let two be 3.");
+            Assert.AreEqual(3, Engine.GetValue("two"));
+            Parser.Run("Let two be \"two\".");
+            Assert.AreEqual("two", Engine.GetValue("two"));
             Parser.Run("Let goodbye be \"world\".");
             Assert.AreEqual("world", Engine.GetValue("goodbye"));
             Parser.Run("Let a witty saying be \"in development\".");
@@ -152,6 +156,16 @@ namespace Tests
             Assert.AreEqual(5, Engine.GetValue("the square root of 2"));
             Parser.Run("Forget the square root of 2.");
             Assert.IsFalse(Engine.Exists("the square root of 2"));
+        }
+
+        [TestMethod]
+        public void TestEvaluateExpressionVariableRecall()
+        {
+            var evaluator = new FluentCParser_Accessor();
+            evaluator.Run("Let x be 2.");
+            Assert.AreEqual((decimal)2, evaluator.EvaluateExpression("x"));
+            evaluator.Run("Let x be \"two\".");
+            Assert.AreEqual("two", evaluator.EvaluateExpression("x"));
         }
 
         [TestMethod]

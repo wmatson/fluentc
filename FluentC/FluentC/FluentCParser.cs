@@ -19,10 +19,10 @@ namespace FluentC
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
         private const string DELETION_KEYWORD = "Forget";
-        private const int KEYWORD = 1;
-        private const int ASSIGNMENT_VARIABLE = 2;
-        private const int DECLARATION_FLAG = 3;
-        private const int ASSIGNMENT_EXPRESSION = 4;
+        private const int KEYWORD_GROUP = 1;
+        private const int ASSIGNMENT_VARIABLE_GROUP = 2;
+        private const int DECLARATION_FLAG_GROUP = 3;
+        private const int ASSIGNMENT_EXPRESSION_GROUP = 4;
 
         private Engine Engine { get; set; }
 
@@ -66,20 +66,20 @@ namespace FluentC
         private void ParseStatement(string statement)
         {
             var match = Regex.Match(statement, STATEMENT_GROUPING);
-            switch (match.Groups[KEYWORD].Value)
+            switch (match.Groups[KEYWORD_GROUP].Value)
             {
                 case MODIFICATION_KEYWORD:
-                    if (match.Groups[DECLARATION_FLAG].Value == ASSIGNMENT_KEYWORD)
+                    if (match.Groups[DECLARATION_FLAG_GROUP].Value == ASSIGNMENT_KEYWORD)
                     {
-                        Engine.Assign(match.Groups[ASSIGNMENT_VARIABLE].Value, EvaluateExpression(match.Groups[ASSIGNMENT_EXPRESSION].Value));
+                        Engine.Assign(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value, EvaluateExpression(match.Groups[ASSIGNMENT_EXPRESSION_GROUP].Value));
                     }
-                    else if (match.Groups[DECLARATION_FLAG].Value == DECLARATION_KEYWORD)
+                    else if (match.Groups[DECLARATION_FLAG_GROUP].Value == DECLARATION_KEYWORD)
                     {
-                        Engine.Declare(match.Groups[ASSIGNMENT_VARIABLE].Value);
+                        Engine.Declare(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
                     }
                     break;
                 case DELETION_KEYWORD:
-                    Engine.Delete(match.Groups[ASSIGNMENT_VARIABLE].Value);
+                    Engine.Delete(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
                     break;
             }
         }
@@ -87,7 +87,18 @@ namespace FluentC
         private dynamic EvaluateExpression(string expression)
         {
             //TODO make this method actually evaluate expressions
-            var result = Regex.Replace(expression, "\"(.*)\"", e => e.Groups[1].Value);
+            var result = Regex.Replace(expression, "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")", e => {
+                var possibleVar = e.Groups[1].Value;
+                if(!(possibleVar.IsNumber() || string.IsNullOrWhiteSpace(possibleVar))) {
+                    var actualVar = Engine.Get(possibleVar);
+                    if (actualVar.IsString)
+                        possibleVar = string.Format("\"{0}\"", actualVar.Data);
+                    else
+                        possibleVar = actualVar.Data.ToString();
+                }
+                return possibleVar;
+            });
+            result = Regex.Replace(result, "\"(.*)\"", e => e.Groups[1].Value);
             if(result.IsNumber()) 
                 return decimal.Parse(result);
             return result;
