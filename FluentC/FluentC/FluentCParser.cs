@@ -14,6 +14,16 @@ namespace FluentC
     /// </summary>
     public class FluentCParser
     {
+        private const string STATEMENT_GROUPING = "(.+?) \\b([^;,\\.?]+?)\\b(?: (be|exist) ?(.*))?\\.";
+        private const string DECLARATION_KEYWORD = "exist";
+        private const string ASSIGNMENT_KEYWORD = "be";
+        private const string MODIFICATION_KEYWORD = "Let";
+        private const string DELETION_KEYWORD = "Forget";
+        private const int KEYWORD = 1;
+        private const int ASSIGNMENT_VARIABLE = 2;
+        private const int DECLARATION_FLAG = 3;
+        private const int ASSIGNMENT_EXPRESSION = 4;
+
         private Engine Engine { get; set; }
 
         /// <summary>
@@ -55,24 +65,21 @@ namespace FluentC
 
         private void ParseStatement(string statement)
         {
-            var match = Regex.Match(statement, "(.+?) \\b([^;,\\.?]+?)\\b(?: (be|exist) ?(.*))?\\.");
-            switch (match.Groups[1].Value)
+            var match = Regex.Match(statement, STATEMENT_GROUPING);
+            switch (match.Groups[KEYWORD].Value)
             {
-                case "Let":
-                    if (match.Groups[3].Value == "be")
+                case MODIFICATION_KEYWORD:
+                    if (match.Groups[DECLARATION_FLAG].Value == ASSIGNMENT_KEYWORD)
                     {
-                        Console.WriteLine("Assign -- {0} -- {1}", match.Groups[2], match.Groups[4]);
-                        Engine.Assign(match.Groups[2].Value, EvaluateExpression(match.Groups[4].Value));
+                        Engine.Assign(match.Groups[ASSIGNMENT_VARIABLE].Value, EvaluateExpression(match.Groups[ASSIGNMENT_EXPRESSION].Value));
                     }
-                    else if (match.Groups[3].Value == "exist")
+                    else if (match.Groups[DECLARATION_FLAG].Value == DECLARATION_KEYWORD)
                     {
-                        Console.WriteLine("Declare -- {0}", match.Groups[2]);
-                        Engine.Declare(match.Groups[2].Value);
+                        Engine.Declare(match.Groups[ASSIGNMENT_VARIABLE].Value);
                     }
                     break;
-                case "Forget":
-                    Console.WriteLine("Delete -- {0}", match.Groups[2].Value);
-                    Engine.Delete(match.Groups[2].Value);
+                case DELETION_KEYWORD:
+                    Engine.Delete(match.Groups[ASSIGNMENT_VARIABLE].Value);
                     break;
             }
         }
