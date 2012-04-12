@@ -144,9 +144,9 @@ namespace FluentC
         private decimal EvaluateNumericalExpression(string expression)
         {
             expression = Regex.Replace(expression, PARENTHESIZED_NUMERICAL_EXPRESSION, e => EvaluateNumericalExpression(e.Groups[1].Value).ToString());
-            while (!Regex.IsMatch(expression, "\\d*\\.?\\d+"))
+            while (!Regex.IsMatch(expression, "^-?\\d*\\.?\\d+$"))
             {
-                var firstOperationMatch = Regex.Match(expression, "(\\d*\\.?\\d+) ([/*]) (\\d*\\.?\\d+)");
+                var firstOperationMatch = Regex.Match(expression, "(-?\\d*\\.?\\d+) ([/*]) (-?\\d*\\.?\\d+)");
                 if (firstOperationMatch != Match.Empty)
                 {
                     expression = expression.Remove(firstOperationMatch.Index, firstOperationMatch.Length);
@@ -163,8 +163,8 @@ namespace FluentC
                 }
                 else
                 {
-                    var secondOperationMatch = Regex.Match(expression, "(\\d*\\.?\\d+) ([-+]) (\\d*\\.?\\d+)");
-                    expression.Remove(secondOperationMatch.Index, secondOperationMatch.Length);
+                    var secondOperationMatch = Regex.Match(expression, "(-?\\d*\\.?\\d+) ([-+]) (-?\\d*\\.?\\d+)");
+                    expression = expression.Remove(secondOperationMatch.Index, secondOperationMatch.Length);
                     var firstOperand = decimal.Parse(secondOperationMatch.Groups[FIRST_OPERAND_GROUP].Value);
                     var secondOperand = decimal.Parse(secondOperationMatch.Groups[SECOND_OPERAND_GROUP].Value);
                     if (secondOperationMatch.Groups[OPERATOR_GROUP].Value == "-")
