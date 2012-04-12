@@ -232,6 +232,8 @@ namespace Tests
             Assert.AreEqual((decimal)2.3, evaluator.EvaluateExpression("x + 0.3"));
             evaluator.Run("Let x be \"o\".");
             Assert.AreEqual("Hello", evaluator.EvaluateExpression("\"Hell\" + x"));
+            evaluator.Run("Let y be \" World\".");
+            Assert.AreEqual("o World", evaluator.EvaluateExpression("x + y"));
         }
     }
 }

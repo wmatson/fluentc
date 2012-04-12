@@ -23,6 +23,11 @@ namespace FluentC
         private const int ASSIGNMENT_VARIABLE_GROUP = 2;
         private const int DECLARATION_FLAG_GROUP = 3;
         private const int ASSIGNMENT_EXPRESSION_GROUP = 4;
+        private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
+        private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\(\\d*\\.?\\d+(?: [-+/*] \\d*\\.?\\d+)+\\)";
+        private const int OPERATOR_GROUP = 2;
+        private const int FIRST_OPERAND_GROUP = 1;
+        private const int SECOND_OPERAND_GROUP = 3;
 
         private Engine Engine { get; set; }
 
@@ -87,9 +92,22 @@ namespace FluentC
         private dynamic EvaluateExpression(string expression)
         {
             //TODO make this method actually evaluate expressions
-            var result = Regex.Replace(expression, "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")", e => {
+            var result = SubstituteVariables(expression);
+            var numericalParts = ExtractNumericalExpressions(result).Select(e => EvaluateNumericalExpression(e));
+            var temp = Regex.Replace(result, "\"(.*?)\"", "#");
+            result = Regex.Replace(result, "\"(.*?)\"", e => e.Groups[1].Value);
+            if(result.IsNumber()) 
+                return decimal.Parse(result);
+            return result;
+        }
+
+        private string SubstituteVariables(string expression)
+        {
+            var result = Regex.Replace(expression, VARIABLE_WITHIN_STATEMENT, e =>
+            {
                 var possibleVar = e.Groups[1].Value;
-                if(!(possibleVar.IsNumber() || string.IsNullOrWhiteSpace(possibleVar))) {
+                if (!(possibleVar.IsNumber() || string.IsNullOrWhiteSpace(possibleVar)))
+                {
                     var actualVar = Engine.Get(possibleVar);
                     if (actualVar.IsString)
                         possibleVar = string.Format("\"{0}\"", actualVar.Data);
@@ -98,10 +116,68 @@ namespace FluentC
                 }
                 return possibleVar;
             });
-            result = Regex.Replace(result, "\"(.*)\"", e => e.Groups[1].Value);
-            if(result.IsNumber()) 
-                return decimal.Parse(result);
             return result;
+        }
+
+        private IEnumerable<string> ExtractNumericalExpressions(string expression)
+        {
+            bool quoting = false;
+            var currentResult = "";
+            foreach (var character in expression)
+            {
+                if (character == '\"')
+                {
+                    quoting = !quoting;
+                    if (quoting && !string.IsNullOrWhiteSpace(currentResult))
+                    {
+                        yield return currentResult;
+                        currentResult = "";
+                    }
+                }
+                if (!quoting)
+                {
+                    currentResult += character;
+                } 
+            }
+        }
+
+        private decimal EvaluateNumericalExpression(string expression)
+        {
+            expression = Regex.Replace(expression, PARENTHESIZED_NUMERICAL_EXPRESSION, e => EvaluateNumericalExpression(e.Groups[1].Value).ToString());
+            while (!Regex.IsMatch(expression, "\\d*\\.?\\d+"))
+            {
+                var firstOperationMatch = Regex.Match(expression, "(\\d*\\.?\\d+) ([/*]) (\\d*\\.?\\d+)");
+                if (firstOperationMatch != Match.Empty)
+                {
+                    expression = expression.Remove(firstOperationMatch.Index, firstOperationMatch.Length);
+                    var firstOperand = decimal.Parse(firstOperationMatch.Groups[FIRST_OPERAND_GROUP].Value);
+                    var secondOperand = decimal.Parse(firstOperationMatch.Groups[SECOND_OPERAND_GROUP].Value);
+                    if (firstOperationMatch.Groups[OPERATOR_GROUP].Value == "/")
+                    {
+                        expression = expression.Insert(firstOperationMatch.Index, (firstOperand / secondOperand).ToString());
+                    }
+                    else
+                    {
+                        expression = expression.Insert(firstOperationMatch.Index, (firstOperand * secondOperand).ToString());
+                    }
+                }
+                else
+                {
+                    var secondOperationMatch = Regex.Match(expression, "(\\d*\\.?\\d+) ([-+]) (\\d*\\.?\\d+)");
+                    expression.Remove(secondOperationMatch.Index, secondOperationMatch.Length);
+                    var firstOperand = decimal.Parse(secondOperationMatch.Groups[FIRST_OPERAND_GROUP].Value);
+                    var secondOperand = decimal.Parse(secondOperationMatch.Groups[SECOND_OPERAND_GROUP].Value);
+                    if (secondOperationMatch.Groups[OPERATOR_GROUP].Value == "-")
+                    {
+                        expression = expression.Insert(firstOperationMatch.Index, (firstOperand - secondOperand).ToString());
+                    }
+                    else
+                    {
+                        expression = expression.Insert(firstOperationMatch.Index, (firstOperand + secondOperand).ToString());
+                    }
+                }
+            }
+            return decimal.Parse(expression);
         }
     }
 }
