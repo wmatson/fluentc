@@ -68,7 +68,7 @@ namespace Tests
             var evaluator = new FluentCParser_Accessor();
             Assert.AreEqual((decimal)1, evaluator.EvaluateExpression("1 / 1"));
             //Assert.AreEqual("infinity", evaluator.EvaluateExpression("1 / 0"));//TODO find a way to assert failure happens
-            Assert.AreEqual((decimal)(6+2.0/3.0), evaluator.EvaluateExpression("2 / .3"));
+            Assert.AreEqual((decimal)2 / (decimal).3, evaluator.EvaluateExpression("2 / .3"));
             Assert.AreEqual((decimal)(6 + 2.0 / 3.0), evaluator.EvaluateExpression("2 / 0.3"));
             Assert.AreEqual((decimal)4, evaluator.EvaluateExpression("20 / 5"));
         }
@@ -92,6 +92,10 @@ namespace Tests
         public void TestEvaluateNumericalExpression() {
             var evaluator = new FluentCParser_Accessor();
             Assert.AreEqual((decimal)4 , evaluator.EvaluateNumericalExpression("1 + 3"));
+            Assert.AreEqual((decimal)4, evaluator.EvaluateNumericalExpression("(1 + 3)"));
+            Assert.AreEqual((decimal)4, evaluator.EvaluateNumericalExpression("(4)"));
+            Assert.AreEqual((decimal)-4, evaluator.EvaluateNumericalExpression("(-4)"));
+            Assert.AreEqual((decimal)-2, evaluator.EvaluateNumericalExpression("(1 + -3)"));
             Assert.AreEqual((decimal)-2, evaluator.EvaluateNumericalExpression("1 + -3"));
             Assert.AreEqual((decimal)-2.2, evaluator.EvaluateNumericalExpression("1 + -3.2"));
             Assert.AreEqual((decimal)1.2, evaluator.EvaluateNumericalExpression("1 + .2"));

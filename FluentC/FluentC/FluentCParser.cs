@@ -24,7 +24,10 @@ namespace FluentC
         private const int DECLARATION_FLAG_GROUP = 3;
         private const int ASSIGNMENT_EXPRESSION_GROUP = 4;
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
-        private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\(\\d*\\.?\\d+(?: [-+/*] \\d*\\.?\\d+)+\\)";
+        private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
+        private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(?-?\\d*\\.?\\d+(?:\\)? [-+/*] \\(?-?\\d*\\.?\\d+)*\\)?)|(?:\"(.+?)\")| \\+ )";
+        private const int NUMERICAL_EXPRESSION_GROUP = 1;
+        private const int STRING_EXPRESSION_GROUP = 2;
         private const int OPERATOR_GROUP = 2;
         private const int FIRST_OPERAND_GROUP = 1;
         private const int SECOND_OPERAND_GROUP = 3;
@@ -91,11 +94,15 @@ namespace FluentC
 
         private dynamic EvaluateExpression(string expression)
         {
-            //TODO make this method actually evaluate expressions
-            var result = SubstituteVariables(expression);
-            var numericalParts = ExtractNumericalExpressions(result).Select(e => EvaluateNumericalExpression(e));
-            var temp = Regex.Replace(result, "\"(.*?)\"", "#");
-            result = Regex.Replace(result, "\"(.*?)\"", e => e.Groups[1].Value);
+            var result = Regex.Replace(SubstituteVariables(expression), EXPRESSION_TYPE_SPLITTER, e =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Groups[NUMERICAL_EXPRESSION_GROUP].Value))
+                    return EvaluateNumericalExpression(e.Groups[NUMERICAL_EXPRESSION_GROUP].Value).ToString();
+                else if (!string.IsNullOrWhiteSpace(e.Groups[STRING_EXPRESSION_GROUP].Value))
+                    return Regex.Replace(e.Groups[STRING_EXPRESSION_GROUP].Value, "\"(.*?)\"", e2 => e2.Groups[1].Value);
+                else
+                    return "";
+            });
             if(result.IsNumber()) 
                 return decimal.Parse(result);
             return result;
@@ -117,28 +124,6 @@ namespace FluentC
                 return possibleVar;
             });
             return result;
-        }
-
-        private IEnumerable<string> ExtractNumericalExpressions(string expression)
-        {
-            bool quoting = false;
-            var currentResult = "";
-            foreach (var character in expression)
-            {
-                if (character == '\"')
-                {
-                    quoting = !quoting;
-                    if (quoting && !string.IsNullOrWhiteSpace(currentResult))
-                    {
-                        yield return currentResult;
-                        currentResult = "";
-                    }
-                }
-                if (!quoting)
-                {
-                    currentResult += character;
-                } 
-            }
         }
 
         private decimal EvaluateNumericalExpression(string expression)
