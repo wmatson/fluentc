@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using FluentCEngine.Exceptions;
 using FluentCEngine.Constructs;
+using FluentCEngine.Interfaces;
 
 namespace FluentCEngine
 {
@@ -23,6 +24,7 @@ namespace FluentCEngine
         public Engine()
         {
             Variables = new Dictionary<string, Variable>();
+            VoidFunctions = new Dictionary<string, VoidFunction>();
         }
 
         #region Variable Management

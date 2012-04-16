@@ -19,12 +19,6 @@ namespace Tests
         private Engine Engine { get; set; }
         private FluentCParser Parser { get; set; }
 
-        public Variables()
-        {
-            //
-            // TODO: Add constructor logic here
-            //
-        }
 
         private TestContext testContextInstance;
 
@@ -107,8 +101,6 @@ namespace Tests
             Assert.IsTrue(Engine.Exists("Two"));
             Engine.Delete("Two");
             Assert.IsFalse(Engine.Exists("Two"));
-
-
         }
 
         [TestMethod]

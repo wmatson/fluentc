@@ -6,6 +6,7 @@ using FluentCEngine;
 using System.IO;
 using System.Text.RegularExpressions;
 using FluentCEngine.Helpers;
+using FluentCEngine.Constructs;
 
 namespace FluentC
 {
@@ -46,6 +47,7 @@ namespace FluentC
         public FluentCParser(Engine engine)
         {
             Engine = engine;
+            Engine.DeclareVoidFunction("Tell me", new NativeVoidFunction( x => Console.WriteLine(x), new Parameter("message", VarType.String)));
         }
 
         /// <summary>
