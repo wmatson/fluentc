@@ -21,7 +21,7 @@ namespace FluentCEngine.Exceptions
         {
             get
             {
-                return string.Format("The variable with the name \"{0}\" does not exist");
+                return string.Format("The variable with the name \"{0}\" does not exist.", VariableName);
             }
         }
     }

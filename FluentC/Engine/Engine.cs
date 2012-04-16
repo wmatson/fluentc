@@ -15,6 +15,7 @@ namespace FluentCEngine
     public class Engine
     {
         private Dictionary<string, Variable> Variables { get; set; }
+        private Dictionary<string, VoidFunction> VoidFunctions { get; set; }
 
         /// <summary>
         /// Initializes a new language engine
@@ -24,6 +25,7 @@ namespace FluentCEngine
             Variables = new Dictionary<string, Variable>();
         }
 
+        #region Variable Management
         /// <summary>
         /// Declares a new variable, setting aside a place in memory for it.
         /// </summary>
@@ -110,5 +112,37 @@ namespace FluentCEngine
         {
             return Variables.Keys.Any(v => v == variable);
         }
+        #endregion
+
+        #region VoidFunction Management
+
+        /// <summary>
+        /// Returns true if the function with the given name has been declared, returns false otherwise
+        /// </summary>
+        /// <param name="function">The name of the function to check</param>
+        /// <returns>true if the function exists, false otherwise</returns>
+        public bool VoidFunctionExists(string function)
+        {
+            return VoidFunctions.Keys.Any(v => v == function);
+        }
+
+        /// <summary>
+        /// Declares the given void function, assigning to it the Vvalue
+        /// </summary>
+        /// <param name="function">The name under which to declare the function</param>
+        /// <param name="value">The value to assign to the function</param>
+        public void DeclareVoidFunction(string function, VoidFunction value)
+        {
+            if (!VoidFunctionExists(function))
+            {
+                VoidFunctions[function] = value;
+            }
+            else
+            {
+                throw new DuplicateNameException(function);
+            }
+        }
+
+        #endregion
     }
 }

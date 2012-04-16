@@ -54,7 +54,7 @@ namespace FluentC
         /// <param name="script">the script to run</param>
         public void Run(string script)
         {
-            var matches = Regex.Matches(script, "\\b.*?\\.");
+            var matches = Regex.Matches(script, "\\b[^?]*?\\.");
             for (int i = 0; i < matches.Count; i++ )
             {
                 var match = matches[i];
