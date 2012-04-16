@@ -10,6 +10,8 @@ namespace Tests
     [TestClass]
     public class Expressions
     {
+        private const decimal TOLERANCE = .001M;
+
         [TestMethod]
         public void TestEvaluateExpressionVariableRecall()
         {
@@ -67,9 +69,7 @@ namespace Tests
         {
             var evaluator = new FluentCParser_Accessor();
             Assert.AreEqual((decimal)1, evaluator.EvaluateExpression("1 / 1"));
-            //Assert.AreEqual("infinity", evaluator.EvaluateExpression("1 / 0"));//TODO find a way to assert failure happens
-            Assert.AreEqual((decimal)2 / (decimal).3, evaluator.EvaluateExpression("2 / .3"));
-            Assert.AreEqual((decimal)(6 + 2.0 / 3.0), evaluator.EvaluateExpression("2 / 0.3"));
+            Assert.IsTrue(TOLERANCE > Math.Abs(decimal.Parse(evaluator.EvaluateExpression("2 / .3").ToString()) - (2M / .3M)));
             Assert.AreEqual((decimal)4, evaluator.EvaluateExpression("20 / 5"));
         }
 
