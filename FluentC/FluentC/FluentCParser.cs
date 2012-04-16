@@ -128,43 +128,59 @@ namespace FluentC
             return result;
         }
 
+        #region Numerical Expressions
         private decimal EvaluateNumericalExpression(string expression)
         {
-            expression = Regex.Replace(expression, PARENTHESIZED_NUMERICAL_EXPRESSION, e => EvaluateNumericalExpression(e.Groups[1].Value).ToString());
-            while (!Regex.IsMatch(expression, "^-?\\d*\\.?\\d+$"))
+            while (Regex.IsMatch(expression, PARENTHESIZED_NUMERICAL_EXPRESSION))
             {
-                var firstOperationMatch = Regex.Match(expression, "(-?\\d*\\.?\\d+) ([/*]) (-?\\d*\\.?\\d+)");
-                if (firstOperationMatch != Match.Empty)
+                expression = Regex.Replace(expression, PARENTHESIZED_NUMERICAL_EXPRESSION, e => EvaluateNumericalExpression(e.Groups[1].Value).ToString());
+            }
+            expression = EvaluateMultiplicationAndDivision(expression);
+            expression = EvaluateAdditionAndSubtraction(expression);
+            return decimal.Parse(expression);
+        }
+
+
+        private static string EvaluateAdditionAndSubtraction(string expression)
+        {
+            while (Regex.IsMatch(expression, " [-+] "))
+            {
+                var secondOperationMatch = Regex.Match(expression, "(-?\\d*\\.?\\d+) ([-+]) (-?\\d*\\.?\\d+)");
+                expression = expression.Remove(secondOperationMatch.Index, secondOperationMatch.Length);
+                var firstOperand = decimal.Parse(secondOperationMatch.Groups[FIRST_OPERAND_GROUP].Value);
+                var secondOperand = decimal.Parse(secondOperationMatch.Groups[SECOND_OPERAND_GROUP].Value);
+                if (secondOperationMatch.Groups[OPERATOR_GROUP].Value == "-")
                 {
-                    expression = expression.Remove(firstOperationMatch.Index, firstOperationMatch.Length);
-                    var firstOperand = decimal.Parse(firstOperationMatch.Groups[FIRST_OPERAND_GROUP].Value);
-                    var secondOperand = decimal.Parse(firstOperationMatch.Groups[SECOND_OPERAND_GROUP].Value);
-                    if (firstOperationMatch.Groups[OPERATOR_GROUP].Value == "/")
-                    {
-                        expression = expression.Insert(firstOperationMatch.Index, (firstOperand / secondOperand).ToString());
-                    }
-                    else
-                    {
-                        expression = expression.Insert(firstOperationMatch.Index, (firstOperand * secondOperand).ToString());
-                    }
+                    expression = expression.Insert(secondOperationMatch.Index, (firstOperand - secondOperand).ToString());
                 }
                 else
                 {
-                    var secondOperationMatch = Regex.Match(expression, "(-?\\d*\\.?\\d+) ([-+]) (-?\\d*\\.?\\d+)");
-                    expression = expression.Remove(secondOperationMatch.Index, secondOperationMatch.Length);
-                    var firstOperand = decimal.Parse(secondOperationMatch.Groups[FIRST_OPERAND_GROUP].Value);
-                    var secondOperand = decimal.Parse(secondOperationMatch.Groups[SECOND_OPERAND_GROUP].Value);
-                    if (secondOperationMatch.Groups[OPERATOR_GROUP].Value == "-")
-                    {
-                        expression = expression.Insert(firstOperationMatch.Index, (firstOperand - secondOperand).ToString());
-                    }
-                    else
-                    {
-                        expression = expression.Insert(firstOperationMatch.Index, (firstOperand + secondOperand).ToString());
-                    }
+                    expression = expression.Insert(secondOperationMatch.Index, (firstOperand + secondOperand).ToString());
                 }
             }
-            return decimal.Parse(expression);
+            return expression;
         }
+
+
+        private static string EvaluateMultiplicationAndDivision(string expression)
+        {
+            while (Regex.IsMatch(expression, " [*/] "))
+            {
+                var firstOperationMatch = Regex.Match(expression, "(-?\\d*\\.?\\d+) ([/*]) (-?\\d*\\.?\\d+)");
+                expression = expression.Remove(firstOperationMatch.Index, firstOperationMatch.Length);
+                var firstOperand = decimal.Parse(firstOperationMatch.Groups[FIRST_OPERAND_GROUP].Value);
+                var secondOperand = decimal.Parse(firstOperationMatch.Groups[SECOND_OPERAND_GROUP].Value);
+                if (firstOperationMatch.Groups[OPERATOR_GROUP].Value == "/")
+                {
+                    expression = expression.Insert(firstOperationMatch.Index, (firstOperand / secondOperand).ToString());
+                }
+                else
+                {
+                    expression = expression.Insert(firstOperationMatch.Index, (firstOperand * secondOperand).ToString());
+                }
+            }
+            return expression;
+        }
+        #endregion
     }
 }
