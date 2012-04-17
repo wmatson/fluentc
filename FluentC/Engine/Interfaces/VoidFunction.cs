@@ -11,7 +11,7 @@ namespace FluentCEngine.Interfaces
 
         void Run(params object[] parameters);
 
-        IEnumerable<Parameter> Parameters { get; }
+        IEnumerable<ParameterMetaData> Parameters { get; }
 
     }
 }

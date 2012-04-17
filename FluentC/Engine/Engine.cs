@@ -128,6 +128,11 @@ namespace FluentCEngine
             return VoidFunctions.Keys.Any(v => v == function);
         }
 
+        public void RunVoidFunction(string function, params object[] parameters)
+        {
+            VoidFunctions[function].Run(parameters);
+        }
+
         /// <summary>
         /// Declares the given void function, assigning to it the Vvalue
         /// </summary>

@@ -10,7 +10,7 @@ namespace FluentCEngine.Constructs
     {
         private Action<object[]> Function { get; set; }
 
-        public NativeVoidFunction(Action<object[]> function, params Parameter[] parameters)
+        public NativeVoidFunction(Action<object[]> function, params ParameterMetaData[] parameters)
         {
             Function = function;
             Parameters = parameters;
@@ -21,6 +21,6 @@ namespace FluentCEngine.Constructs
             Function(parameters);
         }
 
-        public IEnumerable<Parameter> Parameters { get; private set; }
+        public IEnumerable<ParameterMetaData> Parameters { get; private set; }
     }
 }

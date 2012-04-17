@@ -90,23 +90,22 @@ namespace Tests
 
         [TestMethod]
         public void TestEvaluateNumericalExpression() {
-            var evaluator = new FluentCParser_Accessor();
-            Assert.AreEqual(4M, evaluator.EvaluateNumericalExpression("1 + 3"));
-            Assert.AreEqual(4M, evaluator.EvaluateNumericalExpression("(1 + 3)"));
-            Assert.AreEqual(4M, evaluator.EvaluateNumericalExpression("(4)"));
-            Assert.AreEqual(-4M, evaluator.EvaluateNumericalExpression("(-4)"));
-            Assert.AreEqual(-2M, evaluator.EvaluateNumericalExpression("(1 + -3)"));
-            Assert.AreEqual(-2M, evaluator.EvaluateNumericalExpression("1 + -3"));
-            Assert.AreEqual(-2.2M, evaluator.EvaluateNumericalExpression("1 + -3.2"));
-            Assert.AreEqual(1.2M, evaluator.EvaluateNumericalExpression("1 + .2"));
-            Assert.AreEqual(1.2M, evaluator.EvaluateNumericalExpression("1 + 0.2"));
-            Assert.AreEqual(6M, evaluator.EvaluateNumericalExpression("2 * 3"));
-            Assert.AreEqual(2/3M, evaluator.EvaluateNumericalExpression("2 / 3"));
-            Assert.AreEqual(-1M, evaluator.EvaluateNumericalExpression("2 - 3"));
-            Assert.AreEqual(7M, evaluator.EvaluateNumericalExpression("1 + 2 * 3"));
-            Assert.AreEqual(2.5M, evaluator.EvaluateNumericalExpression("1 + 2 * 3 / 4"));
-            Assert.AreEqual(-5M, evaluator.EvaluateNumericalExpression("4 + 3 - 2 * 7 + 5 * 4 / 10"));
-            Assert.AreEqual(30M, evaluator.EvaluateNumericalExpression("1 + 2 + (3 * (4 + 5))"));
+            Assert.AreEqual(4M, FluentCParser_Accessor.EvaluateNumericalExpression("1 + 3"));
+            Assert.AreEqual(4M, FluentCParser_Accessor.EvaluateNumericalExpression("(1 + 3)"));
+            Assert.AreEqual(4M, FluentCParser_Accessor.EvaluateNumericalExpression("(4)"));
+            Assert.AreEqual(-4M, FluentCParser_Accessor.EvaluateNumericalExpression("(-4)"));
+            Assert.AreEqual(-2M, FluentCParser_Accessor.EvaluateNumericalExpression("(1 + -3)"));
+            Assert.AreEqual(-2M, FluentCParser_Accessor.EvaluateNumericalExpression("1 + -3"));
+            Assert.AreEqual(-2.2M, FluentCParser_Accessor.EvaluateNumericalExpression("1 + -3.2"));
+            Assert.AreEqual(1.2M, FluentCParser_Accessor.EvaluateNumericalExpression("1 + .2"));
+            Assert.AreEqual(1.2M, FluentCParser_Accessor.EvaluateNumericalExpression("1 + 0.2"));
+            Assert.AreEqual(6M, FluentCParser_Accessor.EvaluateNumericalExpression("2 * 3"));
+            Assert.AreEqual(2/3M, FluentCParser_Accessor.EvaluateNumericalExpression("2 / 3"));
+            Assert.AreEqual(-1M, FluentCParser_Accessor.EvaluateNumericalExpression("2 - 3"));
+            Assert.AreEqual(7M, FluentCParser_Accessor.EvaluateNumericalExpression("1 + 2 * 3"));
+            Assert.AreEqual(2.5M, FluentCParser_Accessor.EvaluateNumericalExpression("1 + 2 * 3 / 4"));
+            Assert.AreEqual(-5M, FluentCParser_Accessor.EvaluateNumericalExpression("4 + 3 - 2 * 7 + 5 * 4 / 10"));
+            Assert.AreEqual(30M, FluentCParser_Accessor.EvaluateNumericalExpression("1 + 2 + (3 * (4 + 5))"));
         }
     }
 }

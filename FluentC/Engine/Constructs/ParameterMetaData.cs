@@ -5,15 +5,13 @@ using System.Text;
 
 namespace FluentCEngine.Constructs
 {
-    public class Parameter
+    public class ParameterMetaData
     {
-        public Parameter(string name, VarType type)
+        public ParameterMetaData(string name)
         {
             Name = name;
-            Type = type;
         }
 
-        public VarType Type { get; private set; }
         public string Name { get; private set; }
     }
 }

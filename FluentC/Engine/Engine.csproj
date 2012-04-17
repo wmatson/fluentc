@@ -41,7 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constructs\NativeVoidFunction.cs" />
-    <Compile Include="Constructs\Parameter.cs" />
+    <Compile Include="Constructs\ParameterMetaData.cs" />
     <Compile Include="Interfaces\VoidFunction.cs" />
     <Compile Include="Exceptions\DuplicateNameException.cs" />
     <Compile Include="Engine.cs" />

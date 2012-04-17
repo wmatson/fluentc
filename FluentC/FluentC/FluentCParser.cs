@@ -33,7 +33,8 @@ namespace FluentC
         private const int FIRST_OPERAND_GROUP = 1;
         private const int SECOND_OPERAND_GROUP = 3;
 
-        private Engine Engine { get; set; }
+        private Engine PrimaryEngine { get { return Contexts.First(); } }
+        private IEnumerable<Engine> Contexts { get; set; }
 
         /// <summary>
         /// Creates a new FluentCParser running on a fresh instance of Engine
@@ -44,10 +45,12 @@ namespace FluentC
         /// Creates a new FluentCParser that runs on the given Engine
         /// </summary>
         /// <param name="engine">The engine on which to run</param>
-        public FluentCParser(Engine engine)
+        /// <param name="secondaryContexts">The engines to check for functions/variables if they are missing in the primary engine, these engines are evaluated in the order entered as parameters</param>
+        public FluentCParser(params Engine[] contexts)
         {
-            Engine = engine;
-            Engine.DeclareVoidFunction("Tell me", new NativeVoidFunction( x => Console.WriteLine(x), new Parameter("message", VarType.String)));
+            Contexts = contexts;
+            PrimaryEngine.DeclareVoidFunction("Tell me", new NativeVoidFunction( x => Console.WriteLine(x), new ParameterMetaData("message")));
+            
         }
 
         /// <summary>
@@ -81,17 +84,34 @@ namespace FluentC
                 case MODIFICATION_KEYWORD:
                     if (match.Groups[DECLARATION_FLAG_GROUP].Value == ASSIGNMENT_KEYWORD)
                     {
-                        Engine.Assign(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value, EvaluateExpression(match.Groups[ASSIGNMENT_EXPRESSION_GROUP].Value));
+                        var variableContext = GetVariableContext(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
+                        variableContext.Assign(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value, EvaluateExpression(match.Groups[ASSIGNMENT_EXPRESSION_GROUP].Value, Contexts.ToArray()));
                     }
                     else if (match.Groups[DECLARATION_FLAG_GROUP].Value == DECLARATION_KEYWORD)
                     {
-                        Engine.Declare(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
+                        PrimaryEngine.Declare(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
                     }
                     break;
                 case DELETION_KEYWORD:
-                    Engine.Delete(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
+                    var varContext = GetVariableContext(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
+                    varContext.Delete(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
+                    break;
+                default://function invocation
+                    var functionMatch = Regex.Match(statement, "(.+)(?: with )?(.*)\\.");
+                    if (PrimaryEngine.VoidFunctionExists(functionMatch.Groups[1].Value))
+                    {
+                        PrimaryEngine.RunVoidFunction(functionMatch.Groups[1].Value);
+                    }
                     break;
             }
+        }
+
+        private Engine GetVariableContext(string variableName)
+        {
+            var variableContext = Contexts.FirstOrDefault(c => c.Exists(variableName));
+            if (variableContext == null)
+                variableContext = PrimaryEngine;
+            return variableContext;
         }
 
         private dynamic EvaluateExpression(string expression)
@@ -110,14 +130,28 @@ namespace FluentC
             return result;
         }
 
+        private dynamic EvaluateExpression(string expression, params Engine[] contextQueue)
+        {
+            foreach (var context in contextQueue)
+            {
+                expression = SubstituteVariables(expression, context);
+            }
+            return EvaluateExpression(expression);
+        }
+
         private string SubstituteVariables(string expression)
+        {
+            return SubstituteVariables(expression, PrimaryEngine);
+        }
+
+        private string SubstituteVariables(string expression, Engine context)
         {
             var result = Regex.Replace(expression, VARIABLE_WITHIN_STATEMENT, e =>
             {
                 var possibleVar = e.Groups[1].Value;
                 if (!(possibleVar.IsNumber() || string.IsNullOrWhiteSpace(possibleVar)))
                 {
-                    var actualVar = Engine.Get(possibleVar);
+                    var actualVar = context.Get(possibleVar);
                     if (actualVar.IsString)
                         possibleVar = string.Format("\"{0}\"", actualVar.Data);
                     else
@@ -129,7 +163,7 @@ namespace FluentC
         }
 
         #region Numerical Expressions
-        private decimal EvaluateNumericalExpression(string expression)
+        private static decimal EvaluateNumericalExpression(string expression)
         {
             while (Regex.IsMatch(expression, PARENTHESIZED_NUMERICAL_EXPRESSION))
             {
