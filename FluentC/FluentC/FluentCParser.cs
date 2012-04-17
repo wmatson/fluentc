@@ -15,15 +15,20 @@ namespace FluentC
     /// </summary>
     public class FluentCParser
     {
-        private const string STATEMENT_GROUPING = "(.+?) \\b([^;,\\.?]+?)\\b(?: (be|exist) ?(.*))?\\.";
+        private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,.;?\"+/*-]+?)\\b(?: (be|exist|with) ?(.*))?((?:: .*)?\\.)";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
         private const string DELETION_KEYWORD = "Forget";
+        private const string FUNCTION_DECLARATION_KEYWORD = "How";
+        private const string VOID_FUNCTION_FLAG = "to:";
         private const int KEYWORD_GROUP = 1;
-        private const int ASSIGNMENT_VARIABLE_GROUP = 2;
-        private const int DECLARATION_FLAG_GROUP = 3;
-        private const int ASSIGNMENT_EXPRESSION_GROUP = 4;
+        private const int FUNCTION_DECLARATION_FLAG_GROUP = 2;
+        private const int ASSIGNMENT_VARIABLE_GROUP = 3;
+        private const int VARIABLE_DECLARATION_FLAG_GROUP = 4;
+        private const int ASSIGNMENT_EXPRESSION_GROUP = 5;
+        private const int DECLARATION_PARAMETER_GROUP = 5;
+        private const int SCRIPT_PART_GROUP = 6;
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
         private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(?-?\\d*\\.?\\d+(?:\\)? [-+/*] \\(?-?\\d*\\.?\\d+)*\\)?)|(?:\"(.+?)\")| \\+ )";
@@ -82,12 +87,12 @@ namespace FluentC
             switch (match.Groups[KEYWORD_GROUP].Value)
             {
                 case MODIFICATION_KEYWORD:
-                    if (match.Groups[DECLARATION_FLAG_GROUP].Value == ASSIGNMENT_KEYWORD)
+                    if (match.Groups[VARIABLE_DECLARATION_FLAG_GROUP].Value == ASSIGNMENT_KEYWORD)
                     {
                         var variableContext = GetVariableContext(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
                         variableContext.Assign(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value, EvaluateExpression(match.Groups[ASSIGNMENT_EXPRESSION_GROUP].Value, Contexts.ToArray()));
                     }
-                    else if (match.Groups[DECLARATION_FLAG_GROUP].Value == DECLARATION_KEYWORD)
+                    else if (match.Groups[VARIABLE_DECLARATION_FLAG_GROUP].Value == DECLARATION_KEYWORD)
                     {
                         PrimaryEngine.Declare(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
                     }
@@ -96,13 +101,26 @@ namespace FluentC
                     var varContext = GetVariableContext(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
                     varContext.Delete(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
                     break;
-                default://function invocation
-                    var functionMatch = Regex.Match(statement, "(.+)(?: with )?(.*)\\.");
-                    if (PrimaryEngine.VoidFunctionExists(functionMatch.Groups[1].Value))
-                    {
-                        PrimaryEngine.RunVoidFunction(functionMatch.Groups[1].Value);
-                    }
+                case FUNCTION_DECLARATION_KEYWORD:
+                    IEnumerable<ParameterMetaData> parameters = match.Groups[DECLARATION_PARAMETER_GROUP].Value.Split(',').Select(s => s.Trim()).Select(s => new ParameterMetaData(s));
+                    PrimaryEngine.DeclareVoidFunction(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value,new FluentCVoidFunction(match.Groups[SCRIPT_PART_GROUP].Value,PrimaryEngine, parameters.ToArray()));
                     break;
+                default://function invocation
+                    ParseFunctionInvocation(statement);
+                    break;
+            }
+        }
+
+        private void ParseFunctionInvocation(string statement)
+        {
+            var functionName = statement.Split(',', '.')[0];
+            while (!string.IsNullOrWhiteSpace(functionName) && !PrimaryEngine.VoidFunctionExists(functionName))
+            {
+                functionName = functionName.Substring(functionName.LastIndexOf(' '));
+            }
+            if (!string.IsNullOrWhiteSpace(functionName))
+            {
+                PrimaryEngine.RunVoidFunction(functionName);
             }
         }
 
@@ -149,7 +167,7 @@ namespace FluentC
             var result = Regex.Replace(expression, VARIABLE_WITHIN_STATEMENT, e =>
             {
                 var possibleVar = e.Groups[1].Value;
-                if (!(possibleVar.IsNumber() || string.IsNullOrWhiteSpace(possibleVar)))
+                if (!(possibleVar.IsNumber() || string.IsNullOrWhiteSpace(possibleVar)) && context.Exists(possibleVar))
                 {
                     var actualVar = context.Get(possibleVar);
                     if (actualVar.IsString)
