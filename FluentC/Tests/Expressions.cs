@@ -17,7 +17,7 @@ namespace Tests
         {
             var evaluator = new FluentCParser_Accessor();
             evaluator.Run("Let x be 2.");
-            Assert.AreEqual((decimal)2, evaluator.EvaluateExpression("x"));
+            Assert.AreEqual(2M, evaluator.EvaluateExpression("x"));
             evaluator.Run("Let x be \"two\".");
             Assert.AreEqual("two", evaluator.EvaluateExpression("x"));
         }
@@ -26,8 +26,8 @@ namespace Tests
         public void TestEvaluateSimpleExpression()
         {
             var evaluator = new FluentCParser_Accessor();
-            Assert.AreEqual((decimal)2, evaluator.EvaluateExpression("2"));
-            Assert.AreEqual((decimal)2.3, evaluator.EvaluateExpression("2.3"));
+            Assert.AreEqual(2M, evaluator.EvaluateExpression("2"));
+            Assert.AreEqual(2.3M, evaluator.EvaluateExpression("2.3"));
             Assert.AreEqual("Hello", evaluator.EvaluateExpression("\"Hello\""));
             Assert.AreEqual("Hello world", evaluator.EvaluateExpression("\"Hello world\""));
         }
@@ -36,9 +36,9 @@ namespace Tests
         public void TestEvaluateAdditionExpression()
         {
             var evaluator = new FluentCParser_Accessor();
-            Assert.AreEqual((decimal)2, evaluator.EvaluateExpression("1 + 1"));
-            Assert.AreEqual((decimal)2.3, evaluator.EvaluateExpression("2 + .3"));
-            Assert.AreEqual((decimal)2.3, evaluator.EvaluateExpression("2 + 0.3"));
+            Assert.AreEqual(2M, evaluator.EvaluateExpression("1 + 1"));
+            Assert.AreEqual(2.3M, evaluator.EvaluateExpression("2 + .3"));
+            Assert.AreEqual(2.3M, evaluator.EvaluateExpression("2 + 0.3"));
             Assert.AreEqual("Hello", evaluator.EvaluateExpression("\"Hell\" + \"o\""));
         }
 
@@ -46,31 +46,31 @@ namespace Tests
         public void TestEvaluateSubtractionExpression()
         {
             var evaluator = new FluentCParser_Accessor();
-            Assert.AreEqual((decimal)0, evaluator.EvaluateExpression("1 - 1"));
-            Assert.AreEqual((decimal)1, evaluator.EvaluateExpression("1 - 0"));
-            Assert.AreEqual((decimal)1.7, evaluator.EvaluateExpression("2 - .3"));
-            Assert.AreEqual((decimal)1.7, evaluator.EvaluateExpression("2 - 0.3"));
-            Assert.AreEqual((decimal)2, evaluator.EvaluateExpression("2.3 - 0.3"));
+            Assert.AreEqual(0M, evaluator.EvaluateExpression("1 - 1"));
+            Assert.AreEqual(1M, evaluator.EvaluateExpression("1 - 0"));
+            Assert.AreEqual(1.7M, evaluator.EvaluateExpression("2 - .3"));
+            Assert.AreEqual(1.7M, evaluator.EvaluateExpression("2 - 0.3"));
+            Assert.AreEqual(2M, evaluator.EvaluateExpression("2.3 - 0.3"));
         }
 
         [TestMethod]
         public void TestEvaluateMultiplicationExpression()
         {
             var evaluator = new FluentCParser_Accessor();
-            Assert.AreEqual((decimal)1, evaluator.EvaluateExpression("1 * 1"));
-            Assert.AreEqual((decimal)0, evaluator.EvaluateExpression("1 * 0"));
-            Assert.AreEqual((decimal).6, evaluator.EvaluateExpression("2 * .3"));
-            Assert.AreEqual((decimal).6, evaluator.EvaluateExpression("2 * 0.3"));
-            Assert.AreEqual((decimal).69, evaluator.EvaluateExpression("2.3 * 0.3"));
+            Assert.AreEqual(1M, evaluator.EvaluateExpression("1 * 1"));
+            Assert.AreEqual(0M, evaluator.EvaluateExpression("1 * 0"));
+            Assert.AreEqual(.6M, evaluator.EvaluateExpression("2 * .3"));
+            Assert.AreEqual(.6M, evaluator.EvaluateExpression("2 * 0.3"));
+            Assert.AreEqual(.69M, evaluator.EvaluateExpression("2.3 * 0.3"));
         }
 
         [TestMethod]
         public void TestEvaluateDivisionExpression()
         {
             var evaluator = new FluentCParser_Accessor();
-            Assert.AreEqual((decimal)1, evaluator.EvaluateExpression("1 / 1"));
+            Assert.AreEqual(1M, evaluator.EvaluateExpression("1 / 1"));
             Assert.IsTrue(TOLERANCE > Math.Abs(decimal.Parse(evaluator.EvaluateExpression("2 / .3").ToString()) - (2M / .3M)));
-            Assert.AreEqual((decimal)4, evaluator.EvaluateExpression("20 / 5"));
+            Assert.AreEqual(4M, evaluator.EvaluateExpression("20 / 5"));
         }
 
         [TestMethod]
@@ -78,10 +78,10 @@ namespace Tests
         {
             var evaluator = new FluentCParser_Accessor();
             evaluator.Run("Let x be 1.");
-            Assert.AreEqual((decimal)2, evaluator.EvaluateExpression("1 + x"));
+            Assert.AreEqual(2M, evaluator.EvaluateExpression("1 + x"));
             evaluator.Run("Let x be 2.");
-            Assert.AreEqual((decimal)2.3, evaluator.EvaluateExpression("x + .3"));
-            Assert.AreEqual((decimal)2.3, evaluator.EvaluateExpression("x + 0.3"));
+            Assert.AreEqual(2.3M, evaluator.EvaluateExpression("x + .3"));
+            Assert.AreEqual(2.3M, evaluator.EvaluateExpression("x + 0.3"));
             evaluator.Run("Let x be \"o\".");
             Assert.AreEqual("Hello", evaluator.EvaluateExpression("\"Hell\" + x"));
             evaluator.Run("Let y be \" World\".");

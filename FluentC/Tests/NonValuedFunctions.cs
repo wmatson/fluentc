@@ -36,7 +36,7 @@ namespace Tests
         [TestMethod]
         public void TestMethodDeclaration()
         {
-            Assert.Fail("Unwritten.");
+            Assert.Inconclusive("Unwritten.");
         }
 
         [TestMethod]

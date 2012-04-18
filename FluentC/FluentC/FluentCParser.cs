@@ -15,6 +15,7 @@ namespace FluentC
     /// </summary>
     public class FluentCParser
     {
+        #region regex constants
         private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,.;?\"+/*-]+?)\\b(?: (be|exist|with) ?(.*))?((?:: .*)?\\.)";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
@@ -37,6 +38,7 @@ namespace FluentC
         private const int OPERATOR_GROUP = 2;
         private const int FIRST_OPERAND_GROUP = 1;
         private const int SECOND_OPERAND_GROUP = 3;
+        #endregion
 
         private Engine PrimaryEngine { get { return Contexts.First(); } }
         private IEnumerable<Engine> Contexts { get; set; }
@@ -113,6 +115,7 @@ namespace FluentC
 
         private void ParseFunctionInvocation(string statement)
         {
+            //TODO add parameter figuring
             var functionName = statement.Split(',', '.')[0];
             while (!string.IsNullOrWhiteSpace(functionName) && !PrimaryEngine.VoidFunctionExists(functionName))
             {
@@ -131,6 +134,8 @@ namespace FluentC
                 variableContext = PrimaryEngine;
             return variableContext;
         }
+
+        #region expression evaluation
 
         private dynamic EvaluateExpression(string expression)
         {
@@ -233,6 +238,7 @@ namespace FluentC
             }
             return expression;
         }
+        #endregion
         #endregion
     }
 }
