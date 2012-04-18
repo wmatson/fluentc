@@ -119,8 +119,10 @@ namespace Tests
         [TestMethod]
         public void TestScriptAssignment()
         {
+            Assert.IsFalse(Engine.Exists("two"));
             Parser.Run("Let two be 2.");
             Assert.AreEqual(2, Engine.GetValue("two"));
+
             Parser.Run("Let two be 3.");
             Assert.AreEqual(3, Engine.GetValue("two"));
             Parser.Run("Let two be \"two\".");

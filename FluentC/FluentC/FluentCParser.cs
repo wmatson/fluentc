@@ -16,7 +16,7 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,.;?\"+/*-]+?)\\b(?: (be|exist|with) ?(.*))?((?:: .*)?\\.)";
+        private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,.;?\"+/*-]+?)\\b(?: (be|exist|with) ?(.*))?((?:: [^\\.]*)?\\.)";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
@@ -119,7 +119,7 @@ namespace FluentC
             var functionName = statement.Split(',', '.')[0];
             while (!string.IsNullOrWhiteSpace(functionName) && !PrimaryEngine.VoidFunctionExists(functionName))
             {
-                functionName = functionName.Substring(functionName.LastIndexOf(' '));
+                functionName = functionName.Substring(0, functionName.LastIndexOf(' '));
             }
             if (!string.IsNullOrWhiteSpace(functionName))
             {

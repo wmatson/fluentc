@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FluentCEngine;
 using FluentC;
+using FluentCEngine.Constructs;
 
 namespace Tests
 {
@@ -36,7 +37,12 @@ namespace Tests
         [TestMethod]
         public void TestMethodDeclaration()
         {
-            Assert.Inconclusive("Unwritten.");
+            Assert.IsFalse(Engine.VoidFunctionExists("doSomething"));
+            Engine.DeclareVoidFunction("doSomething", new NativeVoidFunction(x => x.ToString(), new ParameterMetaData("item")));
+            Assert.IsTrue(Engine.VoidFunctionExists("doSomething"));
+            Assert.IsFalse(Engine.VoidFunctionExists("FluentC Void Function"));
+            Engine.DeclareVoidFunction("FluentC Void Function", new FluentCVoidFunction("Tell me \"Hello World.\".", Engine));
+            Assert.IsTrue(Engine.VoidFunctionExists("FluentC Void Function"));
         }
 
         [TestMethod]
@@ -48,6 +54,7 @@ namespace Tests
         [TestMethod]
         public void TestScriptMethodDeclaration()
         {
+            Assert.IsFalse(Engine.VoidFunctionExists("add"));
             Parser.Run("How to add with x, y: Let z be x + y.");
             Assert.IsTrue(Engine.VoidFunctionExists("add"));
             Parser.Run("Let x be 0. How to increment: Let x be x + 1.");
@@ -75,6 +82,22 @@ namespace Tests
             Assert.AreEqual(0, Engine.GetValue("x"));
             Parser.Run("increment.");
             Assert.AreEqual(1, Engine.GetValue("x"));
+
+            Assert.IsFalse(Engine.Exists("y"));
+            Parser.Run("How to decrement with y: Let y be y - 1.");
+            Assert.IsFalse(Engine.Exists("y"));
+            Parser.Run("decrement 3.");
+            Assert.IsFalse(Engine.Exists("y"));
+            Parser.Run("decrement with 3.");
+            Assert.IsFalse(Engine.Exists("y"));
+
+            Assert.IsFalse(Engine.Exists("result"));
+            Parser.Run("Let result exist. How to decrement and store in result with y: Let y be y - 1; Let result be y.");
+            Assert.IsTrue(Engine.Exists("result"));
+            Parser.Run("decrement and store in result 3.");
+            Assert.AreEqual(2M, Engine.GetValue("result"));
+            Parser.Run("decrement and store in result with 5.");
+            Assert.AreEqual(4M, Engine.GetValue("result"));
         }
     }
 }
