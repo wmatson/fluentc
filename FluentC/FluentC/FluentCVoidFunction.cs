@@ -29,7 +29,7 @@ namespace FluentC
                 localContext.Assign(parameterNames[i], parameters[i]);
             }
             FluentCParser parser = new FluentCParser(localContext, GlobalContext);
-            parser.Run(Script);
+            parser.RunBlock(Script);
         }
 
         public IEnumerable<ParameterMetaData> Parameters { get; private set; }

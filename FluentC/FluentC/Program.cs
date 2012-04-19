@@ -9,8 +9,15 @@ namespace FluentC
     {
         static void Main(string[] args)
         {
-            new FluentCParser().Run("Let assign be 2. Let declare exist. Forget delete.");
-            Console.ReadLine();
+            FluentCParser parser = new FluentCParser();
+            string entry = "";
+            while (entry != "exit?")
+            {
+                Console.Write(">");
+                entry = Console.ReadLine();
+                parser.Run(entry);
+
+            }
         }
     }
 }

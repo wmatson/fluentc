@@ -16,7 +16,7 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,.;?\"+/*-]+?)\\b(?: (be|exist|with) ?(.*))?((?:: [^\\.]*)?\\.)";
+        private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*)?[\\.;])";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
@@ -32,7 +32,7 @@ namespace FluentC
         private const int SCRIPT_PART_GROUP = 6;
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
-        private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(?-?\\d*\\.?\\d+(?:\\)? [-+/*] \\(?-?\\d*\\.?\\d+)*\\)?)|(?:\"(.+?)\")| \\+ )";
+        private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(*-?\\d*\\.?\\d+(?:\\)* [-+/*] \\(*-?\\d*\\.?\\d+)*\\)*)|(?:\"(.+?)\")| \\+ )";
         private const int NUMERICAL_EXPRESSION_GROUP = 1;
         private const int STRING_EXPRESSION_GROUP = 2;
         private const int OPERATOR_GROUP = 2;
@@ -56,7 +56,7 @@ namespace FluentC
         public FluentCParser(params Engine[] contexts)
         {
             Contexts = contexts;
-            PrimaryEngine.DeclareVoidFunction("Tell me", new NativeVoidFunction( x => Console.WriteLine(x), new ParameterMetaData("message")));
+            PrimaryEngine.DeclareVoidFunction("Tell me", new NativeVoidFunction( x => Console.WriteLine(x[0]), new ParameterMetaData("message")));
             
         }
 
@@ -68,6 +68,20 @@ namespace FluentC
         {
             var matches = Regex.Matches(script, "\\b[^?]*?\\.");
             for (int i = 0; i < matches.Count; i++ )
+            {
+                var match = matches[i];
+                ParseStatement(match.Value);
+            }
+        }
+
+        /// <summary>
+        /// Runs the script contained within the given string
+        /// </summary>
+        /// <param name="script">the script to run</param>
+        public void RunBlock(string script)
+        {
+            var matches = Regex.Matches(script, "\\b[^?]*?[\\.;]");
+            for (int i = 0; i < matches.Count; i++)
             {
                 var match = matches[i];
                 ParseStatement(match.Value);
@@ -116,14 +130,22 @@ namespace FluentC
         private void ParseFunctionInvocation(string statement)
         {
             //TODO add parameter figuring
-            var functionName = statement.Split(',', '.')[0];
-            while (!string.IsNullOrWhiteSpace(functionName) && !PrimaryEngine.VoidFunctionExists(functionName))
+            var functionName = statement.Split(',', '.', ';')[0];
+            while (!string.IsNullOrWhiteSpace(functionName) && !Contexts.Any( e => e.VoidFunctionExists(functionName)))
             {
                 functionName = functionName.Substring(0, functionName.LastIndexOf(' '));
             }
             if (!string.IsNullOrWhiteSpace(functionName))
             {
-                PrimaryEngine.RunVoidFunction(functionName);
+                var parameterString = Regex.Match(statement, string.Format("(?:.{{{0}}})(?: with )?(.*)[\\.;]",functionName.Length)).Groups[1].Value;
+                Contexts
+                    .First( e => e.VoidFunctionExists(functionName))
+                    .RunVoidFunction(functionName, 
+                        parameterString.Split(',')
+                        .Where(s => !string.IsNullOrWhiteSpace(s) && s != ".")
+                        .Select( s=> EvaluateExpression(s, Contexts.ToArray()))
+                        .ToArray()
+                    );
             }
         }
 

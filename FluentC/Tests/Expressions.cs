@@ -89,6 +89,13 @@ namespace Tests
         }
 
         [TestMethod]
+        public void TestEvaluateExpression()
+        {
+            var evaluator = new FluentCParser_Accessor();
+            Assert.AreEqual(500M, evaluator.EvaluateExpression("((2 + 2) * 4 - 16 + 40000) / 80"));
+        }
+
+        [TestMethod]
         public void TestEvaluateNumericalExpression() {
             Assert.AreEqual(4M, FluentCParser_Accessor.EvaluateNumericalExpression("1 + 3"));
             Assert.AreEqual(4M, FluentCParser_Accessor.EvaluateNumericalExpression("(1 + 3)"));
