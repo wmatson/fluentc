@@ -108,7 +108,7 @@ namespace FluentC
                     if (match.Groups[VARIABLE_DECLARATION_FLAG_GROUP].Value == ASSIGNMENT_KEYWORD)
                     {
                         var variableContext = GetVariableContext(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
-                        variableContext.Assign(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value, EvaluateExpression(match.Groups[ASSIGNMENT_EXPRESSION_GROUP].Value, Contexts.ToArray()));
+                        variableContext.Assign(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value, EvaluateExpression(match.Groups[ASSIGNMENT_EXPRESSION_GROUP].Value));
                     }
                     else if (match.Groups[VARIABLE_DECLARATION_FLAG_GROUP].Value == DECLARATION_KEYWORD)
                     {
@@ -174,18 +174,7 @@ namespace FluentC
         /// <returns>the result of evaluating the given expression over the internal contexts of this FluentCParser</returns>
         public dynamic EvaluateExpression(string expression)
         {
-            var result = Regex.Replace(SubstituteVariables(expression), EXPRESSION_TYPE_SPLITTER, e =>
-            {
-                if (!string.IsNullOrWhiteSpace(e.Groups[NUMERICAL_EXPRESSION_GROUP].Value))
-                    return EvaluateNumericalExpression(e.Groups[NUMERICAL_EXPRESSION_GROUP].Value).ToString();
-                else if (!string.IsNullOrWhiteSpace(e.Groups[STRING_EXPRESSION_GROUP].Value))
-                    return Regex.Replace(e.Groups[STRING_EXPRESSION_GROUP].Value, "\"(.*?)\"", e2 => e2.Groups[1].Value);
-                else
-                    return "";
-            });
-            if(result.IsNumber()) 
-                return decimal.Parse(result);
-            return result;
+            return EvaluateExpression(expression, Contexts.ToArray());
         }
 
         private dynamic EvaluateExpression(string expression, params Engine[] contextQueue)
@@ -194,7 +183,28 @@ namespace FluentC
             {
                 expression = SubstituteVariables(expression, context);
             }
-            return EvaluateExpression(expression);
+            return EvaluateRawExpression(expression);
+        }
+
+        /// <summary>
+        /// Evaluates the given expression using the Contexts contained within this FluentCParser.
+        /// </summary>
+        /// <param name="expression">The expression to evaluate</param>
+        /// <returns>the result of evaluating the given expression over the internal contexts of this FluentCParser</returns>
+        public dynamic EvaluateRawExpression(string expression)
+        {
+            var result = Regex.Replace(expression, EXPRESSION_TYPE_SPLITTER, e =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Groups[NUMERICAL_EXPRESSION_GROUP].Value))
+                    return EvaluateNumericalExpression(e.Groups[NUMERICAL_EXPRESSION_GROUP].Value).ToString();
+                else if (!string.IsNullOrWhiteSpace(e.Groups[STRING_EXPRESSION_GROUP].Value))
+                    return Regex.Replace(e.Groups[STRING_EXPRESSION_GROUP].Value, "\"(.*?)\"", e2 => e2.Groups[1].Value);
+                else
+                    return "";
+            });
+            if (result.IsNumber())
+                return decimal.Parse(result);
+            return result;
         }
 
         private string SubstituteVariables(string expression)
