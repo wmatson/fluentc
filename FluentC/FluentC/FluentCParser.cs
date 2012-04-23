@@ -16,7 +16,7 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*)?[\\.;])";
+        private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*)?[\\.;])([^\\.]*?!)?";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
@@ -31,6 +31,7 @@ namespace FluentC
         private const int ASSIGNMENT_EXPRESSION_GROUP = 5;
         private const int DECLARATION_PARAMETER_GROUP = 5;
         private const int SCRIPT_PART_GROUP = 6;
+        private const int RETURN_EXPRESSION_GROUP = 7;
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
         private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(*-?\\d*\\.?\\d+(?:\\)* [-+/*] \\(*-?\\d*\\.?\\d+)*\\)*)|(?:\"(.+?)\")| \\+ )";
@@ -67,7 +68,7 @@ namespace FluentC
         /// <param name="script">the script to run</param>
         public void Run(string script)
         {
-            var matches = Regex.Matches(script, "\\b[^?]*?\\.(\\s+|$)");
+            var matches = Regex.Matches(script, "\\b[^?]*?[\\.]([^\\.]*?!)?(\\s+|$)");
             for (int i = 0; i < matches.Count; i++ )
             {
                 var match = matches[i];
@@ -120,8 +121,12 @@ namespace FluentC
                     break;
                 case FUNCTION_DECLARATION_KEYWORD:
                     IEnumerable<ParameterMetaData> parameters = match.Groups[DECLARATION_PARAMETER_GROUP].Value.Split(',').Select(s => s.Trim()).Select(s => new ParameterMetaData(s));
+                    var functionName = match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value;
+                    var script = match.Groups[SCRIPT_PART_GROUP].Value;
                     if(match.Groups[FUNCTION_DECLARATION_FLAG_GROUP].Value == VOID_FUNCTION_FLAG)
-                        PrimaryEngine.DeclareVoidFunction(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value,new FluentCVoidFunction(match.Groups[SCRIPT_PART_GROUP].Value,PrimaryEngine, parameters.ToArray()));
+                        PrimaryEngine.DeclareVoidFunction(functionName,new FluentCVoidFunction(script,PrimaryEngine, parameters.ToArray()));
+                    else
+                        PrimaryEngine.DeclareValuedFunction(functionName, new FluentCValuedFunction(script, match.Groups[RETURN_EXPRESSION_GROUP].Value, PrimaryEngine, parameters.ToArray()));
                     break;
                 default://function invocation
                     ParseFunctionInvocation(statement);
@@ -131,7 +136,6 @@ namespace FluentC
 
         private void ParseFunctionInvocation(string statement)
         {
-            //TODO add parameter figuring
             var functionName = statement.Split(',', '.', ';')[0];
             while (!string.IsNullOrWhiteSpace(functionName) && !Contexts.Any( e => e.FunctionExists(functionName)))
             {
@@ -163,7 +167,12 @@ namespace FluentC
 
         #region expression evaluation
 
-        private dynamic EvaluateExpression(string expression)
+        /// <summary>
+        /// Evaluates the given expression using the Contexts contained within this FluentCParser.
+        /// </summary>
+        /// <param name="expression">The expression to evaluate</param>
+        /// <returns>the result of evaluating the given expression over the internal contexts of this FluentCParser</returns>
+        public dynamic EvaluateExpression(string expression)
         {
             var result = Regex.Replace(SubstituteVariables(expression), EXPRESSION_TYPE_SPLITTER, e =>
             {
