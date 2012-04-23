@@ -15,7 +15,14 @@ namespace FluentC
             {
                 Console.Write(">");
                 entry = Console.ReadLine();
-                parser.Run(entry);
+                try
+                {
+                    parser.Run(entry);
+                }
+                catch (Exception e) 
+                {
+                    Console.WriteLine("Your entry caused an error: {0}", e.Message);
+                }
 
             }
         }

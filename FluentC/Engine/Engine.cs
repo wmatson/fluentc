@@ -17,6 +17,7 @@ namespace FluentCEngine
     {
         private Dictionary<string, Variable> Variables { get; set; }
         private Dictionary<string, VoidFunction> VoidFunctions { get; set; }
+        private Dictionary<string, ValuedFunction> ValuedFunctions { get; set; }
 
         /// <summary>
         /// Initializes a new language engine
@@ -25,6 +26,7 @@ namespace FluentCEngine
         {
             Variables = new Dictionary<string, Variable>();
             VoidFunctions = new Dictionary<string, VoidFunction>();
+            ValuedFunctions = new Dictionary<string, ValuedFunction>();
         }
 
         #region Variable Management
@@ -123,11 +125,26 @@ namespace FluentCEngine
         /// </summary>
         /// <param name="function">The name of the function to check</param>
         /// <returns>true if the function exists, false otherwise</returns>
+        public bool FunctionExists(string function)
+        {
+            return VoidFunctions.Keys.Any(v => v == function) || ValuedFunctions.Keys.Any(v => v == function);
+        }
+
+        /// <summary>
+        /// Returns true if the function with the given name has been declared, returns false otherwise
+        /// </summary>
+        /// <param name="function">The name of the function to check</param>
+        /// <returns>true if the function exists, false otherwise</returns>
         public bool VoidFunctionExists(string function)
         {
             return VoidFunctions.Keys.Any(v => v == function);
         }
 
+        /// <summary>
+        /// Runs the specified function with the specified parameters
+        /// </summary>
+        /// <param name="function">The function to run.</param>
+        /// <param name="parameters">The parameters to use with the function.</param>
         public void RunVoidFunction(string function, params object[] parameters)
         {
             VoidFunctions[function].Run(parameters);
@@ -140,7 +157,7 @@ namespace FluentCEngine
         /// <param name="value">The value to assign to the function</param>
         public void DeclareVoidFunction(string function, VoidFunction value)
         {
-            if (!VoidFunctionExists(function))
+            if (!FunctionExists(function))
             {
                 VoidFunctions[function] = value;
             }
@@ -150,6 +167,46 @@ namespace FluentCEngine
             }
         }
 
+        #endregion
+
+        #region Valued Function Managament
+        /// <summary>
+        /// Returns true if a valued function exists with the name denoted by function.
+        /// </summary>
+        /// <param name="function">The name of the function to check for.</param>
+        /// <returns>True if and only if there is a valued function with the name specified by function</returns>
+        public bool ValuedFunctionExists(string function)
+        {
+            return ValuedFunctions.Keys.Any(v => v == function);
+        }
+
+        /// <summary>
+        /// Runs the function denoted by the name function using the specified parameters.
+        /// </summary>
+        /// <param name="function">The name of the function to run.</param>
+        /// <param name="parameters">The parameters to use with the function.</param>
+        /// <returns>The return value of the function</returns>
+        public dynamic ValuedFunction(string function, params object[] parameters)
+        {
+            return ValuedFunctions[function].Run(parameters);
+        }
+
+        /// <summary>
+        /// Declares the given valued function, assigning to it the Value
+        /// </summary>
+        /// <param name="function">The name under which to declare the function</param>
+        /// <param name="value">The value to assign to the function</param>
+        public void DeclareValuedFunction(string function, ValuedFunction value)
+        {
+            if (!FunctionExists(function) && !Exists(function))
+            {
+                ValuedFunctions[function] = value;
+            }
+            else
+            {
+                throw new DuplicateNameException(function);
+            }
+        }
         #endregion
     }
 }

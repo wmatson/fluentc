@@ -37,30 +37,30 @@ namespace Tests
         [TestMethod]
         public void TestMethodDeclaration()
         {
-            Assert.IsFalse(Engine.VoidFunctionExists("doSomething"));
+            Assert.IsFalse(Engine.FunctionExists("doSomething"));
             Engine.DeclareVoidFunction("doSomething", new NativeVoidFunction(x => x.ToString(), new ParameterMetaData("item")));
-            Assert.IsTrue(Engine.VoidFunctionExists("doSomething"));
-            Assert.IsFalse(Engine.VoidFunctionExists("FluentC Void Function"));
+            Assert.IsTrue(Engine.FunctionExists("doSomething"));
+            Assert.IsFalse(Engine.FunctionExists("FluentC Void Function"));
             Engine.DeclareVoidFunction("FluentC Void Function", new FluentCVoidFunction("Tell me \"Hello World.\".", Engine));
-            Assert.IsTrue(Engine.VoidFunctionExists("FluentC Void Function"));
+            Assert.IsTrue(Engine.FunctionExists("FluentC Void Function"));
         }
 
         [TestMethod]
         public void TestNativeFunctionExistence()
         {
-            Engine.VoidFunctionExists("Tell me");
+            Engine.FunctionExists("Tell me");
         }
 
         [TestMethod]
         public void TestScriptMethodDeclaration()
         {
-            Assert.IsFalse(Engine.VoidFunctionExists("add"));
+            Assert.IsFalse(Engine.FunctionExists("add"));
             Parser.Run("How to add with x, y: Let z be x + y.");
-            Assert.IsTrue(Engine.VoidFunctionExists("add"));
+            Assert.IsTrue(Engine.FunctionExists("add"));
             Parser.Run("Let x be 0. How to increment: Let x be x + 1.");
-            Assert.IsTrue(Engine.VoidFunctionExists("increment"));
+            Assert.IsTrue(Engine.FunctionExists("increment"));
             Parser.Run("How to skydive with turtles: Let five be 5; Let two be 2; Let seven be five + two.");
-            Assert.IsTrue(Engine.VoidFunctionExists("skydive"));
+            Assert.IsTrue(Engine.FunctionExists("skydive"));
             Assert.IsFalse(Engine.Exists("five"));
             Assert.IsFalse(Engine.Exists("two"));
             Assert.IsFalse(Engine.Exists("five"));
@@ -69,9 +69,9 @@ namespace Tests
             Assert.IsFalse(Engine.Exists("my favorite var"));
             Assert.IsFalse(Engine.Exists("another variable"));
             Assert.IsTrue(Engine.Exists("one"));
-            Assert.IsTrue(Engine.VoidFunctionExists("do something that uses multiple words in its name"));
+            Assert.IsTrue(Engine.FunctionExists("do something that uses multiple words in its name"));
             Parser.Run("How to stuff with stuff: Let x be stuff.");
-            Assert.IsTrue(Engine.VoidFunctionExists("stuff"));
+            Assert.IsTrue(Engine.FunctionExists("stuff"));
             Assert.IsFalse(Engine.Exists("stuff"));
         }
 
@@ -98,6 +98,14 @@ namespace Tests
             Assert.AreEqual(2M, Engine.GetValue("result"));
             Parser.Run("decrement and store in result with 5.");
             Assert.AreEqual(4M, Engine.GetValue("result"));
+
+            Parser.Run("How to add and store in result with x, y: Let result be x + y.");
+            Assert.IsTrue(Engine.FunctionExists("add and store in result"));
+            Parser.Run("add and store in result with 1.2, 6.");
+            Assert.AreEqual(7.2M, Engine.GetValue("result"));
+
+            Parser.Run("add and store in result with -1.2, 6.");
+            Assert.AreEqual(4.8M, Engine.GetValue("result"));
         }
     }
 }

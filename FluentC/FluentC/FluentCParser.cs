@@ -22,7 +22,8 @@ namespace FluentC
         private const string MODIFICATION_KEYWORD = "Let";
         private const string DELETION_KEYWORD = "Forget";
         private const string FUNCTION_DECLARATION_KEYWORD = "How";
-        private const string VOID_FUNCTION_FLAG = "to:";
+        private const string VOID_FUNCTION_FLAG = "to ";
+        private const string VALUED_FUNCTION_FLAG = "to know ";
         private const int KEYWORD_GROUP = 1;
         private const int FUNCTION_DECLARATION_FLAG_GROUP = 2;
         private const int ASSIGNMENT_VARIABLE_GROUP = 3;
@@ -66,7 +67,7 @@ namespace FluentC
         /// <param name="script">the script to run</param>
         public void Run(string script)
         {
-            var matches = Regex.Matches(script, "\\b[^?]*?\\.");
+            var matches = Regex.Matches(script, "\\b[^?]*?\\.(\\s+|$)");
             for (int i = 0; i < matches.Count; i++ )
             {
                 var match = matches[i];
@@ -119,7 +120,8 @@ namespace FluentC
                     break;
                 case FUNCTION_DECLARATION_KEYWORD:
                     IEnumerable<ParameterMetaData> parameters = match.Groups[DECLARATION_PARAMETER_GROUP].Value.Split(',').Select(s => s.Trim()).Select(s => new ParameterMetaData(s));
-                    PrimaryEngine.DeclareVoidFunction(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value,new FluentCVoidFunction(match.Groups[SCRIPT_PART_GROUP].Value,PrimaryEngine, parameters.ToArray()));
+                    if(match.Groups[FUNCTION_DECLARATION_FLAG_GROUP].Value == VOID_FUNCTION_FLAG)
+                        PrimaryEngine.DeclareVoidFunction(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value,new FluentCVoidFunction(match.Groups[SCRIPT_PART_GROUP].Value,PrimaryEngine, parameters.ToArray()));
                     break;
                 default://function invocation
                     ParseFunctionInvocation(statement);
@@ -131,21 +133,23 @@ namespace FluentC
         {
             //TODO add parameter figuring
             var functionName = statement.Split(',', '.', ';')[0];
-            while (!string.IsNullOrWhiteSpace(functionName) && !Contexts.Any( e => e.VoidFunctionExists(functionName)))
+            while (!string.IsNullOrWhiteSpace(functionName) && !Contexts.Any( e => e.FunctionExists(functionName)))
             {
                 functionName = functionName.Substring(0, functionName.LastIndexOf(' '));
             }
             if (!string.IsNullOrWhiteSpace(functionName))
             {
                 var parameterString = Regex.Match(statement, string.Format("(?:.{{{0}}})(?: with )?(.*)[\\.;]",functionName.Length)).Groups[1].Value;
-                Contexts
-                    .First( e => e.VoidFunctionExists(functionName))
-                    .RunVoidFunction(functionName, 
-                        parameterString.Split(',')
+                var parameters = parameterString.Split(',')
                         .Where(s => !string.IsNullOrWhiteSpace(s) && s != ".")
                         .Select( s=> EvaluateExpression(s, Contexts.ToArray()))
-                        .ToArray()
-                    );
+                        .ToArray();
+                var functionContext = Contexts.First(e => e.FunctionExists(functionName));
+                if (functionContext.VoidFunctionExists(functionName))
+                    functionContext.RunVoidFunction(functionName, parameters);
+                else
+                    functionContext.ValuedFunction(functionName, parameters);
+                    
             }
         }
 
