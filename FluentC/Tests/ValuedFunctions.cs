@@ -80,22 +80,6 @@ namespace Tests
             Assert.IsFalse(Engine.Exists("y"));
             Assert.AreEqual(16, Parser.EvaluateExpression("the square of 4"));
             Assert.IsFalse(Engine.Exists("y"));
-
-            //Assert.IsFalse(Engine.Exists("result"));
-            //Parser.Run("Let result exist. How to decrement and store in result with y: Let y be y - 1; Let result be y.");
-            //Assert.IsTrue(Engine.Exists("result"));
-            //Parser.Run("decrement and store in result 3.");
-            //Assert.AreEqual(2M, Engine.GetValue("result"));
-            //Parser.Run("decrement and store in result with 5.");
-            //Assert.AreEqual(4M, Engine.GetValue("result"));
-
-            //Parser.Run("How to add and store in result with x, y: Let result be x + y.");
-            //Assert.IsTrue(Engine.FunctionExists("add and store in result"));
-            //Parser.Run("add and store in result with 1.2, 6.");
-            //Assert.AreEqual(7.2M, Engine.GetValue("result"));
-
-            //Parser.Run("add and store in result with -1.2, 6.");
-            //Assert.AreEqual(4.8M, Engine.GetValue("result"));
         }
     }
 }

@@ -149,10 +149,7 @@ namespace FluentC
                         .Select( s=> EvaluateExpression(s, Contexts.ToArray()))
                         .ToArray();
                 var functionContext = Contexts.First(e => e.FunctionExists(functionName));
-                if (functionContext.VoidFunctionExists(functionName))
-                    functionContext.RunVoidFunction(functionName, parameters);
-                else
-                    functionContext.ValuedFunction(functionName, parameters);
+                functionContext.RunFunction(functionName, parameters);
                     
             }
         }

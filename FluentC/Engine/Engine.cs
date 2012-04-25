@@ -118,8 +118,7 @@ namespace FluentCEngine
         }
         #endregion
 
-        #region VoidFunction Management
-
+        #region General Function Management
         /// <summary>
         /// Returns true if the function with the given name has been declared, returns false otherwise
         /// </summary>
@@ -129,6 +128,28 @@ namespace FluentCEngine
         {
             return VoidFunctions.Keys.Any(v => v == function) || ValuedFunctions.Keys.Any(v => v == function);
         }
+
+        /// <summary>
+        /// Runs the function denoted by the given string, returning its return value. If the function is a void function, this method returns null.
+        /// </summary>
+        /// <param name="function">The function to run</param>
+        /// <param name="parameters">The parameters to supply when running the function</param>
+        /// <returns>the return value of the function, or null if there is none</returns>
+        public dynamic RunFunction(string function, params object[] parameters)
+        {
+            if(VoidFunctionExists(function)) {
+                RunVoidFunction(function, parameters);
+            } else {
+                return ValuedFunction(function, parameters);
+            }
+            return null;
+        }
+
+        #endregion
+
+        #region VoidFunction Management
+
+
 
         /// <summary>
         /// Returns true if the function with the given name has been declared, returns false otherwise
