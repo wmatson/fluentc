@@ -19,7 +19,7 @@ namespace FluentC
             Parameters = parameters;
             GlobalContext = globalContext;
             Script = script;
-            ReturnExpression = returnExpression;
+            ReturnExpression = returnExpression.Substring(0, returnExpression.IndexOf('!'));
         }
 
         public dynamic Run(params object[] parameters)

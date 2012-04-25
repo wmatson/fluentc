@@ -58,7 +58,7 @@ namespace Tests
             Assert.IsFalse(Engine.Exists("five"));
             Assert.IsFalse(Engine.Exists("seven"));
 
-            Parser.Run("How to know how to do something that uses multiple words in its name: Let my favorite var be 0; Let another variable be \"Hello\". Let one exist. my favorite var!");
+            Parser.Run("How to know how to do something that uses multiple words in its name: Let my favorite var be 0; Let another variable be \"Hello\". my favorite var! Let one exist.");
             Assert.IsFalse(Engine.Exists("my favorite var"));
             Assert.IsFalse(Engine.Exists("another variable"));
             Assert.IsTrue(Engine.Exists("one"));

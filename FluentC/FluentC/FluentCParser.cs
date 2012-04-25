@@ -16,7 +16,7 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*)?[\\.;])([^\\.]*?!)?";
+        private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,\\.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*)?[\\.;])([^\\.]*?!)?";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
@@ -34,9 +34,10 @@ namespace FluentC
         private const int RETURN_EXPRESSION_GROUP = 7;
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
-        private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(*-?\\d*\\.?\\d+(?:\\)* [-+/*] \\(*-?\\d*\\.?\\d+)*\\)*)|(?:\"(.+?)\")| \\+ )";
+        private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(*-?\\d*\\.?\\d+(?:\\)* [-+/*] \\(*-?\\d*\\.?\\d+)*\\)*)|(?:\"(.+?)\")|(?:\\b([^\\.;?\"]+)\\b)| \\+ )";
         private const int NUMERICAL_EXPRESSION_GROUP = 1;
         private const int STRING_EXPRESSION_GROUP = 2;
+        private const int VALUED_FUNCTION_EXPRESSION_GROUP = 3;
         private const int OPERATOR_GROUP = 2;
         private const int FIRST_OPERAND_GROUP = 1;
         private const int SECOND_OPERAND_GROUP = 3;
@@ -134,7 +135,7 @@ namespace FluentC
             }
         }
 
-        private void ParseFunctionInvocation(string statement)
+        private dynamic ParseFunctionInvocation(string statement)
         {
             var functionName = statement.Split(',', '.', ';')[0];
             while (!string.IsNullOrWhiteSpace(functionName) && !Contexts.Any( e => e.FunctionExists(functionName)))
@@ -143,15 +144,15 @@ namespace FluentC
             }
             if (!string.IsNullOrWhiteSpace(functionName))
             {
-                var parameterString = Regex.Match(statement, string.Format("(?:.{{{0}}})(?: with )?(.*)[\\.;]",functionName.Length)).Groups[1].Value;
+                var parameterString = Regex.Match(statement, string.Format("(?:.{{{0}}})(?: with )?(.*)[\\.;]?",functionName.Length)).Groups[1].Value;
                 var parameters = parameterString.Split(',')
                         .Where(s => !string.IsNullOrWhiteSpace(s) && s != ".")
                         .Select( s=> EvaluateExpression(s, Contexts.ToArray()))
                         .ToArray();
                 var functionContext = Contexts.First(e => e.FunctionExists(functionName));
-                functionContext.RunFunction(functionName, parameters);
-                    
+                return functionContext.RunFunction(functionName, parameters);
             }
+            return null;
         }
 
         private Engine GetVariableContext(string variableName)
@@ -196,6 +197,8 @@ namespace FluentC
                     return EvaluateNumericalExpression(e.Groups[NUMERICAL_EXPRESSION_GROUP].Value).ToString();
                 else if (!string.IsNullOrWhiteSpace(e.Groups[STRING_EXPRESSION_GROUP].Value))
                     return Regex.Replace(e.Groups[STRING_EXPRESSION_GROUP].Value, "\"(.*?)\"", e2 => e2.Groups[1].Value);
+                else if (!string.IsNullOrWhiteSpace(e.Groups[VALUED_FUNCTION_EXPRESSION_GROUP].Value))
+                    return ParseFunctionInvocation(e.Groups[VALUED_FUNCTION_EXPRESSION_GROUP].Value).ToString();
                 else
                     return "";
             });
