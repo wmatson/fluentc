@@ -4,21 +4,25 @@ using System.Linq;
 using System.Text;
 using System.Speech;
 using System.Speech.Recognition;
+using System.Speech.Synthesis;
 
 namespace FluentC
 {
     class Program
     {
-        static FluentCParser parser = new FluentCParser();
+        static FluentCParser parser = new FluentCParser() { SpeakOnTellMe = true };
+        static SpeechSynthesizer synth = new SpeechSynthesizer();
         static void Main(string[] args)
         {
+            
             SpeechRecognizer recognizer = new SpeechRecognizer();
-            recognizer.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(recognizer_SpeechRecognized);
 
             var builder = new GrammarBuilder("Let ");
             builder.AppendDictation();
             builder.Append("exist");
-            recognizer.LoadGrammar(new Grammar(builder));
+            var declare = new Grammar(builder);
+            declare.SpeechRecognized += recognizer_SpeechRecognized;
+            recognizer.LoadGrammar(declare);
 
             builder = new GrammarBuilder("Let ");
             builder.AppendDictation();
@@ -30,7 +34,10 @@ namespace FluentC
             }
             builder.Append(choices);
 
-            recognizer.LoadGrammar(new Grammar(builder));
+            var defaultAssignment = new Grammar(builder) { Name = "Default Assignment" };
+            defaultAssignment.SpeechRecognized += recognizer_SpeechRecognized;
+
+            recognizer.LoadGrammar(defaultAssignment);
 
             var operationBuilder = new GrammarBuilder();
 
@@ -45,11 +52,15 @@ namespace FluentC
             operationBuilder.Append(choices);
             builder.Append(operationBuilder);
 
-            recognizer.LoadGrammar(new Grammar(builder));
+            var operation = new Grammar(builder);
+            operation.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(operation_SpeechRecognized);
+            recognizer.LoadGrammar(operation);
 
             builder = new GrammarBuilder("Tell me ");
             builder.AppendDictation();
-            recognizer.LoadGrammar(new Grammar(builder));
+            var tellme = new Grammar(builder);
+            tellme.SpeechRecognized += recognizer_SpeechRecognized;
+            recognizer.LoadGrammar(tellme);
 
             
             string entry = "";
@@ -59,6 +70,22 @@ namespace FluentC
                 entry = Console.ReadLine();
                 Run(entry);
             }
+        }
+
+        static void operation_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
+        {
+            var semantics = e.Result.Semantics;
+            var text = e.Result.Words[0].Text.Substring(0, 1) + e.Result.Words[0].Text.Substring(1) + " ";
+            for (int i = 1; i < e.Result.Words.Count - 3; i++)
+            {
+                text += e.Result.Words[i].Text + " ";
+            }
+            text += e.Result.Words[e.Result.Words.Count-3].Text;
+            text += semantics.Value;
+            text += e.Result.Words[e.Result.Words.Count - 1].Text;
+            text += ".";
+            Console.WriteLine(text);
+            Run(text);
         }
 
         static void recognizer_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)

@@ -7,6 +7,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using FluentCEngine.Helpers;
 using FluentCEngine.Constructs;
+using System.Speech.Synthesis;
 
 namespace FluentC
 {
@@ -43,8 +44,12 @@ namespace FluentC
         private const int SECOND_OPERAND_GROUP = 3;
         #endregion
 
+
+
         private Engine PrimaryEngine { get { return Contexts.First(); } }
         private IEnumerable<Engine> Contexts { get; set; }
+
+        public bool SpeakOnTellMe = false;
 
         /// <summary>
         /// Creates a new FluentCParser running on a fresh instance of Engine
@@ -59,7 +64,16 @@ namespace FluentC
         public FluentCParser(params Engine[] contexts)
         {
             Contexts = contexts;
-            PrimaryEngine.DeclareVoidFunction("Tell me", new NativeVoidFunction( x => Console.WriteLine(x[0]), new ParameterMetaData("message")));
+            SpeechSynthesizer synth = new SpeechSynthesizer();
+            synth.SelectVoice(synth.GetInstalledVoices().First().VoiceInfo.Name);
+            synth.Volume = 100;
+            PrimaryEngine.DeclareVoidFunction("Tell me", new NativeVoidFunction( x => {
+                Console.WriteLine(x[0]);
+                if (SpeakOnTellMe)
+                {
+                    synth.Speak(x[0].ToString());
+                }
+            }, new ParameterMetaData("message")));
             
         }
 
