@@ -35,7 +35,7 @@ namespace FluentC
         private const int RETURN_EXPRESSION_GROUP = 7;
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
-        private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(*-?\\d*\\.?\\d+(?:\\)* [-+/*] \\(*-?\\d*\\.?\\d+)*\\)*)|(?:\"(.+?)\")|(?:\\b([^\\.;?\"]+)\\b)| \\+ )";
+        private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(*-?\\d*\\.?\\d+(?:\\)* [-+/*] \\(*-?\\d*\\.?\\d+)*\\)*)|(?:\"(.+?)\")|(?:\\b([^\\.;]+))| \\+ )";
         private const int NUMERICAL_EXPRESSION_GROUP = 1;
         private const int STRING_EXPRESSION_GROUP = 2;
         private const int VALUED_FUNCTION_EXPRESSION_GROUP = 3;
@@ -49,7 +49,23 @@ namespace FluentC
         private Engine PrimaryEngine { get { return Contexts.First(); } }
         private IEnumerable<Engine> Contexts { get; set; }
 
-        public bool SpeakOnTellMe = false;
+        private SpeechSynthesizer Synth {get;set;}
+
+        private bool _speakOnTellMe = false;
+        public bool SpeakOnTellMe
+        {
+            get { return _speakOnTellMe; }
+            set
+            {
+                if (value)
+                {
+                    Synth = new SpeechSynthesizer();
+                    Synth.SelectVoice(Synth.GetInstalledVoices().First().VoiceInfo.Name);
+                    Synth.Volume = 100;
+                }
+                _speakOnTellMe = value;
+            }
+        }
 
         /// <summary>
         /// Creates a new FluentCParser running on a fresh instance of Engine
@@ -64,16 +80,41 @@ namespace FluentC
         public FluentCParser(params Engine[] contexts)
         {
             Contexts = contexts;
-            SpeechSynthesizer synth = new SpeechSynthesizer();
-            synth.SelectVoice(synth.GetInstalledVoices().First().VoiceInfo.Name);
-            synth.Volume = 100;
+            
             PrimaryEngine.DeclareVoidFunction("Tell me", new NativeVoidFunction( x => {
                 Console.WriteLine(x[0]);
                 if (SpeakOnTellMe)
                 {
-                    synth.Speak(x[0].ToString());
+                    Synth.Speak(x[0].ToString());
                 }
             }, new ParameterMetaData("message")));
+            PrimaryEngine.DeclareValuedFunction("Ask me for a string", new NativeValuedFunction(prompt =>
+                {
+                    Console.WriteLine(prompt[0].ToString());
+                    Console.Write(">");
+                    return Console.ReadLine();
+                }, new ParameterMetaData("Prompt")));
+            PrimaryEngine.DeclareValuedFunction("Ask me for a number", new NativeValuedFunction(prompt => 
+            {
+                string entry = "";
+                while (!entry.IsNumber())
+                {
+                    Console.WriteLine(prompt[0].ToString());
+                    Console.Write("(Number) >");
+                    entry = Console.ReadLine();
+                    if(!entry.IsNumber())
+                        Console.WriteLine("Please enter a number.");
+                }
+                return entry;
+            }, new ParameterMetaData("Prompt")));
+            PrimaryEngine.DeclareValuedFunction("Give me the part of", new NativeValuedFunction( parameters =>
+            {
+                return parameters[0].ToString().Substring(int.Parse(parameters[1].ToString()), int.Parse(parameters[2].ToString()));
+            }, new ParameterMetaData("string"), new ParameterMetaData("starting index"), new ParameterMetaData("length")));
+            PrimaryEngine.DeclareValuedFunction("Give me the length of", new NativeValuedFunction(parameters =>
+            {
+                return parameters[0].ToString().Length;
+            }, new ParameterMetaData("string")));
             
         }
 

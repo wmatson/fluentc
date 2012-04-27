@@ -75,12 +75,13 @@ namespace FluentC
         static void operation_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
             var semantics = e.Result.Semantics;
+            var spacemaker = (e.Result.Semantics.Value.ToString() == " / ") ? 4 : 3;
             var text = e.Result.Words[0].Text.Substring(0, 1) + e.Result.Words[0].Text.Substring(1) + " ";
-            for (int i = 1; i < e.Result.Words.Count - 3; i++)
+            for (int i = 1; i < e.Result.Words.Count - spacemaker; i++)
             {
                 text += e.Result.Words[i].Text + " ";
             }
-            text += e.Result.Words[e.Result.Words.Count-3].Text;
+            text += e.Result.Words[e.Result.Words.Count-spacemaker].Text;
             text += semantics.Value;
             text += e.Result.Words[e.Result.Words.Count - 1].Text;
             text += ".";

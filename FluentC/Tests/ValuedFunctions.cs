@@ -38,10 +38,10 @@ namespace Tests
         [TestMethod]
         public void TestNativeFunctionExistence()
         {
-            Engine.FunctionExists("Ask me for a number");
-            Engine.FunctionExists("Ask me for a string");
-            Engine.FunctionExists("Give me the length of the string");
-            Engine.FunctionExists("Give me the part of the string");
+            Assert.IsTrue(Engine.FunctionExists("Ask me for a number"));
+            Assert.IsTrue(Engine.FunctionExists("Ask me for a string"));
+            Assert.IsTrue(Engine.FunctionExists("Give me the length of"));
+            Assert.IsTrue(Engine.FunctionExists("Give me the part of"));
         }
 
         [TestMethod]
