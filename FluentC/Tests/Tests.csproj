@@ -50,6 +50,7 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Conditionals.cs" />
     <Compile Include="ValuedFunctions.cs" />
     <Compile Include="Expressions.cs" />
     <Compile Include="NonValuedFunctions.cs" />
