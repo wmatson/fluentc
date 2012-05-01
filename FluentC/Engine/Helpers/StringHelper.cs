@@ -12,5 +12,11 @@ namespace FluentCEngine.Helpers
             decimal syntax;
             return decimal.TryParse(value, out syntax);
         }
+
+        public static bool IsCondition(this string value)
+        {
+            bool syntax;
+            return bool.TryParse(value, out syntax);
+        }
     }
 }

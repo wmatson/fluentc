@@ -35,10 +35,12 @@ namespace FluentC
         private const int RETURN_EXPRESSION_GROUP = 8;
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
-        private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(*-?\\d*\\.?\\d+(?:\\)* [-+/*] \\(*-?\\d*\\.?\\d+)*\\)*)|(?:\"(.+?)\")|(?:\\b([^\\.;]+))| \\+ )";
-        private const int NUMERICAL_EXPRESSION_GROUP = 1;
-        private const int STRING_EXPRESSION_GROUP = 2;
-        private const int VALUED_FUNCTION_EXPRESSION_GROUP = 3;
+        private const string PARENTHESIZED_EXPRESSION = "\\(([^()]*)\\)";
+        private const string EXPRESSION_TYPE_SPLITTER = "(?:(-?\\d*\\.?\\d+ (?:is larger than|is smaller than|is the same as|[><=]) -?\\d*\\.?\\d+)|(-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+(?! [><=]))*)|(?:\"(.+?)\")| \\+ |(?:\\b([^\\.;]+)))";
+        private const int CONDITIONAL_EXPRESSION_GROUP = 1;
+        private const int NUMERICAL_EXPRESSION_GROUP = 2;
+        private const int STRING_EXPRESSION_GROUP = 3;
+        private const int VALUED_FUNCTION_EXPRESSION_GROUP = 4;
         private const int OPERATOR_GROUP = 2;
         private const int FIRST_OPERAND_GROUP = 1;
         private const int SECOND_OPERAND_GROUP = 3;
@@ -246,6 +248,10 @@ namespace FluentC
         /// <returns>the result of evaluating the given expression over the internal contexts of this FluentCParser</returns>
         public dynamic EvaluateRawExpression(string expression)
         {
+            while (Regex.IsMatch(expression, PARENTHESIZED_EXPRESSION))
+            {
+                expression = Regex.Replace(expression, PARENTHESIZED_NUMERICAL_EXPRESSION, e => EvaluateRawExpression(e.Groups[1].Value).ToString());
+            }
             var result = Regex.Replace(expression, EXPRESSION_TYPE_SPLITTER, e =>
             {
                 if (!string.IsNullOrWhiteSpace(e.Groups[NUMERICAL_EXPRESSION_GROUP].Value))
@@ -254,11 +260,15 @@ namespace FluentC
                     return Regex.Replace(e.Groups[STRING_EXPRESSION_GROUP].Value, "\"(.*?)\"", e2 => e2.Groups[1].Value);
                 else if (!string.IsNullOrWhiteSpace(e.Groups[VALUED_FUNCTION_EXPRESSION_GROUP].Value))
                     return ParseFunctionInvocation(e.Groups[VALUED_FUNCTION_EXPRESSION_GROUP].Value).ToString();
+                else if (!string.IsNullOrWhiteSpace(e.Groups[CONDITIONAL_EXPRESSION_GROUP].Value))
+                    return false.ToString();
                 else
                     return "";
             });
             if (result.IsNumber())
                 return decimal.Parse(result);
+            if (result.IsCondition())
+                return bool.Parse(result);
             return result;
         }
 
