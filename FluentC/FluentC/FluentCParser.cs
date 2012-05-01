@@ -17,7 +17,7 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (to(?: know)? )?\\b([^,\\.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*)?[\\.;])([^\\.]*?!)?";
+        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )?|(?:([^,]+), )?)\\b([^,\\.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*)?[\\.;])([^\\.]*?!)?";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
@@ -27,12 +27,12 @@ namespace FluentC
         private const string VALUED_FUNCTION_FLAG = "to know ";
         private const int KEYWORD_GROUP = 1;
         private const int FUNCTION_DECLARATION_FLAG_GROUP = 2;
-        private const int ASSIGNMENT_VARIABLE_GROUP = 3;
-        private const int VARIABLE_DECLARATION_FLAG_GROUP = 4;
-        private const int ASSIGNMENT_EXPRESSION_GROUP = 5;
-        private const int DECLARATION_PARAMETER_GROUP = 5;
-        private const int SCRIPT_PART_GROUP = 6;
-        private const int RETURN_EXPRESSION_GROUP = 7;
+        private const int ASSIGNMENT_VARIABLE_GROUP = 4;
+        private const int VARIABLE_DECLARATION_FLAG_GROUP = 5;
+        private const int ASSIGNMENT_EXPRESSION_GROUP = 6;
+        private const int DECLARATION_PARAMETER_GROUP = 6;
+        private const int SCRIPT_PART_GROUP = 7;
+        private const int RETURN_EXPRESSION_GROUP = 8;
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
         private const string EXPRESSION_TYPE_SPLITTER = "(?:(\\(*-?\\d*\\.?\\d+(?:\\)* [-+/*] \\(*-?\\d*\\.?\\d+)*\\)*)|(?:\"(.+?)\")|(?:\\b([^\\.;]+))| \\+ )";
