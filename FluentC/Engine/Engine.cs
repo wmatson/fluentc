@@ -19,6 +19,14 @@ namespace FluentCEngine
         private Dictionary<string, VoidFunction> VoidFunctions { get; set; }
         private Dictionary<string, ValuedFunction> ValuedFunctions { get; set; }
 
+        public IEnumerable<string> DeclaredVariables
+        {
+            get
+            {
+                return Variables.Keys;
+            }
+        }
+
         /// <summary>
         /// Initializes a new language engine
         /// </summary>

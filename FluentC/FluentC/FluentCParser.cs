@@ -23,10 +23,12 @@ namespace FluentC
         private const string MODIFICATION_KEYWORD = "Let";
         private const string DELETION_KEYWORD = "Forget";
         private const string FUNCTION_DECLARATION_KEYWORD = "How";
+        private const string CONDITIONAL_STATEMENT_KEYWORD = "If";
         private const string VOID_FUNCTION_FLAG = "to ";
         private const string VALUED_FUNCTION_FLAG = "to know ";
         private const int KEYWORD_GROUP = 1;
         private const int FUNCTION_DECLARATION_FLAG_GROUP = 2;
+        private const int CONDITION_GROUP = 3;
         private const int ASSIGNMENT_VARIABLE_GROUP = 4;
         private const int VARIABLE_DECLARATION_FLAG_GROUP = 5;
         private const int ASSIGNMENT_EXPRESSION_GROUP = 6;
@@ -36,7 +38,7 @@ namespace FluentC
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
         private const string PARENTHESIZED_EXPRESSION = "\\(([^()]*)\\)";
-        private const string EXPRESSION_TYPE_SPLITTER = "(?:(-?\\d*\\.?\\d+ (?:is larger than|is smaller than|is the same as|[><=]) -?\\d*\\.?\\d+)|(-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+(?! [><=]))*)|(?:\"(.+?)\")| \\+ |(?:\\b([^\\.;]+)))";
+        private const string EXPRESSION_TYPE_SPLITTER = "(?:((?:-?\\d*\\.?\\d+|\".+?\") (?:is larger than|is smaller than|is the same as|[><=]) (?:-?\\d*\\.?\\d+|\".+?\"))|(-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+(?! [><=]))*)|(?:\"(.+?)\")| \\+ |(?:\\b([^\\.;]+)))";
         private const int CONDITIONAL_EXPRESSION_GROUP = 1;
         private const int NUMERICAL_EXPRESSION_GROUP = 2;
         private const int STRING_EXPRESSION_GROUP = 3;
@@ -44,6 +46,11 @@ namespace FluentC
         private const int OPERATOR_GROUP = 2;
         private const int FIRST_OPERAND_GROUP = 1;
         private const int SECOND_OPERAND_GROUP = 3;
+        private const string LESS_THAN_WORDING = "is smaller than";
+        private const string GREATER_THAN_WORDING = "is larger than";
+        private const string EQUALITY_WORDING = "is the same as";
+        private const string NOT_WORDING = "it is not the case that";
+
         #endregion
 
 
@@ -82,21 +89,32 @@ namespace FluentC
         public FluentCParser(params Engine[] contexts)
         {
             Contexts = contexts;
+
+            DeclareNativeFunctions();
             
-            PrimaryEngine.DeclareVoidFunction("Tell me", new NativeVoidFunction( x => {
+        }
+
+        private void DeclareNativeFunctions()
+        {
+            PrimaryEngine.DeclareVoidFunction("Tell me", new NativeVoidFunction(x =>
+            {
                 Console.WriteLine(x[0]);
                 if (SpeakOnTellMe)
                 {
                     Synth.Speak(x[0].ToString());
                 }
             }, new ParameterMetaData("message")));
+            PrimaryEngine.DeclareVoidFunction("Run", new NativeVoidFunction(x =>
+            {
+                RunFile(x[0].ToString());
+            }, new ParameterMetaData("filename")));
             PrimaryEngine.DeclareValuedFunction("Ask me for a string", new NativeValuedFunction(prompt =>
-                {
-                    Console.WriteLine(prompt[0].ToString());
-                    Console.Write(">");
-                    return Console.ReadLine();
-                }, new ParameterMetaData("Prompt")));
-            PrimaryEngine.DeclareValuedFunction("Ask me for a number", new NativeValuedFunction(prompt => 
+            {
+                Console.WriteLine(prompt[0].ToString());
+                Console.Write(">");
+                return Console.ReadLine();
+            }, new ParameterMetaData("Prompt")));
+            PrimaryEngine.DeclareValuedFunction("Ask me for a number", new NativeValuedFunction(prompt =>
             {
                 string entry = "";
                 while (!entry.IsNumber())
@@ -104,12 +122,12 @@ namespace FluentC
                     Console.WriteLine(prompt[0].ToString());
                     Console.Write("(Number) >");
                     entry = Console.ReadLine();
-                    if(!entry.IsNumber())
+                    if (!entry.IsNumber())
                         Console.WriteLine("Please enter a number.");
                 }
                 return entry;
             }, new ParameterMetaData("Prompt")));
-            PrimaryEngine.DeclareValuedFunction("Give me the part of", new NativeValuedFunction( parameters =>
+            PrimaryEngine.DeclareValuedFunction("Give me the part of", new NativeValuedFunction(parameters =>
             {
                 return parameters[0].ToString().Substring(int.Parse(parameters[1].ToString()), int.Parse(parameters[2].ToString()));
             }, new ParameterMetaData("string"), new ParameterMetaData("starting index"), new ParameterMetaData("length")));
@@ -117,7 +135,6 @@ namespace FluentC
             {
                 return parameters[0].ToString().Length;
             }, new ParameterMetaData("string")));
-            
         }
 
         /// <summary>
@@ -126,7 +143,7 @@ namespace FluentC
         /// <param name="script">the script to run</param>
         public void Run(string script)
         {
-            var matches = Regex.Matches(script, "\\b[^?]*?[\\.]([^\\.]*?!)?(\\s+|$)");
+            var matches = Regex.Matches(script, "\\b([^?]|\"[^\"]*\")*?[\\.]([^\\.]*?!)?(\\s+|$)", RegexOptions.Multiline);
             for (int i = 0; i < matches.Count; i++ )
             {
                 var match = matches[i];
@@ -201,7 +218,7 @@ namespace FluentC
             }
             if (!string.IsNullOrWhiteSpace(functionName))
             {
-                var parameterString = Regex.Match(statement, string.Format("(?:.{{{0}}})(?: with )?(.*)[\\.;]?",functionName.Length)).Groups[1].Value;
+                var parameterString = Regex.Match(statement, string.Format("(?:.{{{0}}})(?: with)? ?(.*)[\\.;]?",functionName.Length)).Groups[1].Value;
                 var parameters = parameterString.Split(',')
                         .Where(s => !string.IsNullOrWhiteSpace(s) && s != ".")
                         .Select( s=> EvaluateExpression(s, Contexts.ToArray()))
@@ -236,7 +253,7 @@ namespace FluentC
         {
             foreach (var context in contextQueue)
             {
-                expression = SubstituteVariables(expression, context);
+                expression = SubstituteVariables(expression.Trim(), context);
             }
             return EvaluateRawExpression(expression);
         }
@@ -261,7 +278,7 @@ namespace FluentC
                 else if (!string.IsNullOrWhiteSpace(e.Groups[VALUED_FUNCTION_EXPRESSION_GROUP].Value))
                     return ParseFunctionInvocation(e.Groups[VALUED_FUNCTION_EXPRESSION_GROUP].Value).ToString();
                 else if (!string.IsNullOrWhiteSpace(e.Groups[CONDITIONAL_EXPRESSION_GROUP].Value))
-                    return false.ToString();
+                    return EvaluateConditionalExpression(e.Groups[CONDITIONAL_EXPRESSION_GROUP].Value);
                 else
                     return "";
             });
@@ -272,6 +289,37 @@ namespace FluentC
             return result;
         }
 
+        private string EvaluateConditionalExpression(string expression)
+        {
+            expression = expression.Replace(LESS_THAN_WORDING, "<");
+            expression = expression.Replace(GREATER_THAN_WORDING, ">");
+            expression = expression.Replace(EQUALITY_WORDING, "=");
+            expression = Regex.Replace(expression, "(.*?) ([<>=]) (.*)", x =>
+            {
+                dynamic operand1;
+                dynamic operand2;
+                if (x.Groups[FIRST_OPERAND_GROUP].Value.IsNumber())
+                    operand1 = decimal.Parse(x.Groups[FIRST_OPERAND_GROUP].Value);
+                else
+                    operand1 = x.Groups[FIRST_OPERAND_GROUP].Value;
+                if (x.Groups[SECOND_OPERAND_GROUP].Value.IsNumber())
+                    operand2 = decimal.Parse(x.Groups[SECOND_OPERAND_GROUP].Value);
+                else
+                    operand2 = x.Groups[SECOND_OPERAND_GROUP].Value;
+                switch (x.Groups[OPERATOR_GROUP].Value)
+                {
+                    case "<":
+                        return (operand1.CompareTo(operand2) < 0).ToString();
+                    case ">":
+                        return (operand1.CompareTo(operand2) > 0).ToString();
+                    case "=":
+                        return (operand1.CompareTo(operand2) == 0).ToString();
+                }
+                return x.Value;
+            });
+            return expression;
+        }
+
         private string SubstituteVariables(string expression)
         {
             return SubstituteVariables(expression, PrimaryEngine);
@@ -279,20 +327,44 @@ namespace FluentC
 
         private string SubstituteVariables(string expression, Engine context)
         {
-            var result = Regex.Replace(expression, VARIABLE_WITHIN_STATEMENT, e =>
+            var parts = expression.Split(' ').Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
+            int index = 0;
+            while (index < parts.Length)
             {
-                var possibleVar = e.Groups[1].Value;
-                if (!(possibleVar.IsNumber() || string.IsNullOrWhiteSpace(possibleVar)) && context.Exists(possibleVar))
+                IEnumerable<string> possibleVariables = context.DeclaredVariables.Where(var => var.StartsWith(parts[index])).ToList();
+                //enumerates now before index changes, and stops from reenumerating when index changes.
+                index++;
+                while (possibleVariables.Count() == 0 && index < parts.Length)
                 {
-                    var actualVar = context.Get(possibleVar);
-                    if (actualVar.IsString)
-                        possibleVar = string.Format("\"{0}\"", actualVar.Data);
-                    else
-                        possibleVar = actualVar.Data.ToString();
+                    possibleVariables = context.DeclaredVariables.Where(var => var.StartsWith(parts[index])).ToList();
+                    index++;
                 }
-                return possibleVar;
-            });
-            return result;
+                if (index <= parts.Length)
+                {
+                    var possibleMatchIndex = index - 1;
+
+                    var possibleMatch = parts[possibleMatchIndex];
+                    index++;
+                    while (!possibleVariables.Contains(possibleMatch) && possibleVariables.Count() > 0 && index < parts.Length)
+                    {
+                        possibleMatch = string.Format("{0} {1}", possibleMatch, parts[index++]);
+                        possibleVariables = possibleVariables.Where(var => var.StartsWith(possibleMatch));
+                    }
+                    if (context.Exists(possibleMatch))
+                    {
+                        var actualVar = context.Get(possibleMatch);
+                        string result;
+                        if (actualVar.IsString)
+                            result = string.Format("\"{0}\"", actualVar.Data);
+                        else
+                            result = actualVar.Data.ToString();
+                        var match = Regex.Match(expression, string.Format("\\b{0}\\b",possibleMatch));
+                        expression = string.Format("{0}{1}{2}", expression.Substring(0, match.Index), result, expression.Substring(match.Index + match.Length));
+                    }
+                    index = possibleMatchIndex + 1;
+                }
+            }
+            return expression;
         }
 
         #region Numerical Expressions

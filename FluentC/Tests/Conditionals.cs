@@ -125,10 +125,10 @@ namespace Tests
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("-1 is smaller than 1.0"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("-1 is smaller than 1.0"));
 
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("1.0 is smaller than 1.0"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("1 is smaller than 1.0"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("1.0 is smaller than 1"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression(".1 is smaller than .1"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("1.0 is smaller than 1.0"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("1 is smaller than 1.0"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("1.0 is smaller than 1"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression(".1 is smaller than .1"));
 
         }
 
@@ -147,10 +147,10 @@ namespace Tests
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("-1 < 1.0"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("-1 < 1.0"));
 
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("1.0 < 1.0"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("1 < 1.0"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("1.0 < 1"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression(".1 < .1"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("1.0 < 1.0"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("1 < 1.0"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("1.0 < 1"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression(".1 < .1"));
         }
 
         [TestMethod]
