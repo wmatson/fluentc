@@ -250,7 +250,7 @@ namespace FluentC
         {
             while (Regex.IsMatch(expression, PARENTHESIZED_EXPRESSION))
             {
-                expression = Regex.Replace(expression, PARENTHESIZED_NUMERICAL_EXPRESSION, e => EvaluateRawExpression(e.Groups[1].Value).ToString());
+                expression = Regex.Replace(expression, PARENTHESIZED_EXPRESSION, e => EvaluateRawExpression(e.Groups[1].Value).ToString());
             }
             var result = Regex.Replace(expression, EXPRESSION_TYPE_SPLITTER, e =>
             {

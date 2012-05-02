@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FluentC;
+using FluentCEngine;
 
 namespace Tests
 {
@@ -199,6 +200,7 @@ namespace Tests
 
         #endregion
 
+        #region Same As
         [TestMethod]
         public void TestNumericalSameAs_Worded()
         {
@@ -262,6 +264,59 @@ namespace Tests
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("b = b"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("c = c"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("cat = cat"));
+        }
+        #endregion
+
+        #region Not
+        [TestMethod]
+        public void TestNot_Worded()
+        {
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (5 is the same as 3)"));
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (1 is the same as .1)"));
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (-1 is the same as -1.2"));
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (1.0 is the same as -1)"));
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (1.0 is the same as -.1)"));
+
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("it is not the case that (5 is the same as 5)"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("it is not the case that (-1 is the same as -1)"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("it is not the case that (-1 is the same as -1.0)"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("it is not the case that (-1.0 is the same as -1.0)"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("it is not the case that (-.1 is the same as -0.1)"));
+        }
+
+        [TestMethod]
+        public void TestNot_Symboled()
+        {
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(5 is the same as 3)"));
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(1 is the same as .1)"));
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(-1 is the same as -1.2"));
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(1.0 is the same as -1)"));
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(1.0 is the same as -.1)"));
+
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("!(5 is the same as 5)"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("!(-1 is the same as -1)"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("!(-1 is the same as -1.0)"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("!(-1.0 is the same as -1.0)"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("!(-.1 is the same as -0.1)"));
+        }
+
+        #endregion
+
+        [TestMethod]
+        public void TestConditionalStatements()
+        {
+            var Engine = new Engine();
+            var Parser = new FluentCParser(Engine);
+            Parser.Run("Let x be 0. If 1 > -1, Let x be 1.");
+            Assert.AreEqual(1M, Engine.GetValue("x"));
+            Parser.Run("If x < 0, Let x be x - 1; Let x be 27.");
+            Assert.AreEqual(1M, Engine.GetValue("x"));
+            Parser.Run("Let y be 2. Let x be 2. If x = y, Let y be y * x.");
+            Assert.AreEqual(4M, Engine.GetValue("y"));
+            Parser.Run("Let condition be 3 = 3. If condition, Let y be 7. Let condition be it is not the case that condition. If it is not the case that condition, Let x be 7.");
+            Assert.AreEqual(7M, Engine.GetValue("y"));
+            Assert.AreEqual(7M, Engine.GetValue("x"));
+
         }
     }
 }
