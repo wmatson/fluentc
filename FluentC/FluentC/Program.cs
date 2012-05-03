@@ -11,10 +11,13 @@ namespace FluentC
     class Program
     {
         static FluentCParser parser = new FluentCParser() { SpeakOnTellMe = true };
-        static SpeechSynthesizer synth = new SpeechSynthesizer();
         static void Main(string[] args)
         {
-            
+            if (args.Length > 0)
+            {
+                parser.RunFile(args[0]);
+            }
+
             SpeechRecognizer recognizer = new SpeechRecognizer();
 
             var builder = new GrammarBuilder("Let ");
@@ -70,6 +73,7 @@ namespace FluentC
                 entry = Console.ReadLine();
                 Run(entry);
             }
+            recognizer.Dispose();
         }
 
         static void operation_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)

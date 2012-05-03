@@ -18,5 +18,12 @@ namespace FluentCEngine.Helpers
             bool syntax;
             return bool.TryParse(value, out syntax);
         }
+
+        public static dynamic ToNumber(this string value)
+        {
+            if (value.IsNumber())
+                return decimal.Parse(value);
+            return value;
+        }
     }
 }

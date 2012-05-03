@@ -169,9 +169,9 @@ namespace FluentC
         /// Runs the script contained within the file denoted by the given filename
         /// </summary>
         /// <param name="filename">the name of the file to run as a script</param>
-        public void RunFile(string filename)
+        public void RunFile(string fileName)
         {
-            Run(File.ReadAllText(filename));
+            Run(File.ReadAllText(fileName));
         }
 
         private void ParseStatement(string statement)
@@ -289,23 +289,15 @@ namespace FluentC
             return result;
         }
 
-        private string EvaluateConditionalExpression(string expression)
+        private static string EvaluateConditionalExpression(string expression)
         {
             expression = Regex.Replace(expression, LESS_THAN_WORDING, m => m.Groups[1].Value + " < " + m.Groups[2].Value);
             expression = Regex.Replace(expression, GREATER_THAN_WORDING, m => m.Groups[1].Value + " > " + m.Groups[2].Value);
             expression = Regex.Replace(expression, EQUALITY_WORDING, m => m.Groups[1].Value + " = " + m.Groups[2].Value);
             expression = Regex.Replace(expression, "(.*?) ([<>=]) (.*)", x =>
             {
-                dynamic operand1;
-                dynamic operand2;
-                if (x.Groups[FIRST_OPERAND_GROUP].Value.IsNumber())
-                    operand1 = decimal.Parse(x.Groups[FIRST_OPERAND_GROUP].Value);
-                else
-                    operand1 = x.Groups[FIRST_OPERAND_GROUP].Value;
-                if (x.Groups[SECOND_OPERAND_GROUP].Value.IsNumber())
-                    operand2 = decimal.Parse(x.Groups[SECOND_OPERAND_GROUP].Value);
-                else
-                    operand2 = x.Groups[SECOND_OPERAND_GROUP].Value;
+                dynamic operand1 = x.Groups[FIRST_OPERAND_GROUP].Value.ToNumber();
+                dynamic operand2 = x.Groups[SECOND_OPERAND_GROUP].Value.ToNumber();
                 switch (x.Groups[OPERATOR_GROUP].Value)
                 {
                     case "<":
@@ -325,7 +317,7 @@ namespace FluentC
             return SubstituteVariables(expression, PrimaryEngine);
         }
 
-        private string SubstituteVariables(string expression, Engine context)
+        private static string SubstituteVariables(string expression, Engine context)
         {
             var parts = Regex.Matches(expression, "(?<= |^)\\S*(?= |$)");// Split(' ').Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
             int index = 0;
