@@ -169,22 +169,23 @@ namespace Tests
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("cat is smaller than dog"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("a is smaller than cat"));
 
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("a is smaller than a"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("b is smaller than b"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("c is smaller than c"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("cat is smaller than cat"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("a is smaller than a"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("b is smaller than b"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("c is smaller than c"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("cat is smaller than cat"));
 
         }
 
         [TestMethod]
         public void TestStringSmallerThan_Symboled()
         {
-            Evaluator.Run("Let a be \"a\". Let b be \"b\". Let c be \"c\". Let dog be \"dog\". Let cat be \"cat\".");
+            Evaluator.Run("Let a be \"a\". Let b be \"b\". Let c be \"c\". Let dog be \"dog\". Let cat be \"cat\". Let is larger than be \"is larger than\".");
             Assert.IsFalse((bool)Evaluator.EvaluateExpression("b < a"));
             Assert.IsFalse((bool)Evaluator.EvaluateExpression("c < a"));
             Assert.IsFalse((bool)Evaluator.EvaluateExpression("c < b"));
             Assert.IsFalse((bool)Evaluator.EvaluateExpression("dog < cat"));
             Assert.IsFalse((bool)Evaluator.EvaluateExpression("cat < a"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("is larger than < a"));
 
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("a < b"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("a < c"));
@@ -192,10 +193,10 @@ namespace Tests
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("cat < dog"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("a < cat"));
 
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("a < a"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("b < b"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("c < c"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("cat < cat"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("a < a"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("b < b"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("c < c"));
+            Assert.IsFalse((bool)Evaluator.EvaluateExpression("cat < cat"));
         }
 
         #endregion

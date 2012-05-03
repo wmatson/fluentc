@@ -38,7 +38,7 @@ namespace FluentC
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
         private const string PARENTHESIZED_EXPRESSION = "\\(([^()]*)\\)";
-        private const string EXPRESSION_TYPE_SPLITTER = "(?:((?:-?\\d*\\.?\\d+|\".+?\") (?:is larger than|is smaller than|is the same as|[><=]) (?:-?\\d*\\.?\\d+|\".+?\"))|(-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+(?! [><=]))*)|(?:\"(.+?)\")| \\+ |(?:\\b([^\\.;]+)))";
+        private const string EXPRESSION_TYPE_SPLITTER = "(?:((?:-?\\d*\\.?\\d+|\"[^\"]*\") (?:is larger than|is smaller than|is the same as|[><=]) (?:-?\\d*\\.?\\d+|\"[^\"]*\"))|(-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+(?! [><=]))*)|(?:\"(.+?)\")| \\+ |(?:\\b([^\\.;]+)))";
         private const int CONDITIONAL_EXPRESSION_GROUP = 1;
         private const int NUMERICAL_EXPRESSION_GROUP = 2;
         private const int STRING_EXPRESSION_GROUP = 3;
@@ -46,9 +46,9 @@ namespace FluentC
         private const int OPERATOR_GROUP = 2;
         private const int FIRST_OPERAND_GROUP = 1;
         private const int SECOND_OPERAND_GROUP = 3;
-        private const string LESS_THAN_WORDING = "is smaller than";
-        private const string GREATER_THAN_WORDING = "is larger than";
-        private const string EQUALITY_WORDING = "is the same as";
+        private const string LESS_THAN_WORDING = "(-?\\d*\\.?\\d+|\"[^\"]*\")(?: is smaller than )(-?\\d*\\.?\\d+|\"[^\"]*\")";
+        private const string GREATER_THAN_WORDING = "(-?\\d*\\.?\\d+|\"[^\"]*\")(?: is larger than )(-?\\d*\\.?\\d+|\"[^\"]*\")";
+        private const string EQUALITY_WORDING = "(-?\\d*\\.?\\d+|\"[^\"]*\")(?: is the same as )(-?\\d*\\.?\\d+|\"[^\"]*\")";
         private const string NOT_WORDING = "it is not the case that";
 
         #endregion
@@ -291,9 +291,9 @@ namespace FluentC
 
         private string EvaluateConditionalExpression(string expression)
         {
-            expression = expression.Replace(LESS_THAN_WORDING, "<");
-            expression = expression.Replace(GREATER_THAN_WORDING, ">");
-            expression = expression.Replace(EQUALITY_WORDING, "=");
+            expression = Regex.Replace(expression, LESS_THAN_WORDING, m => m.Groups[1].Value + " < " + m.Groups[2].Value);
+            expression = Regex.Replace(expression, GREATER_THAN_WORDING, m => m.Groups[1].Value + " > " + m.Groups[2].Value);
+            expression = Regex.Replace(expression, EQUALITY_WORDING, m => m.Groups[1].Value + " = " + m.Groups[2].Value);
             expression = Regex.Replace(expression, "(.*?) ([<>=]) (.*)", x =>
             {
                 dynamic operand1;
@@ -327,39 +327,39 @@ namespace FluentC
 
         private string SubstituteVariables(string expression, Engine context)
         {
-            var parts = expression.Split(' ').Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
+            var parts = Regex.Matches(expression, "(?<= |^)\\S*(?= |$)");// Split(' ').Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
             int index = 0;
-            while (index < parts.Length)
+            while (index < parts.Count)
             {
-                IEnumerable<string> possibleVariables = context.DeclaredVariables.Where(var => var.StartsWith(parts[index])).ToList();
+                IEnumerable<string> possibleVariables = context.DeclaredVariables.Where(var => var.StartsWith(parts[index].Value)).ToList();
                 //enumerates now before index changes, and stops from reenumerating when index changes.
                 index++;
-                while (possibleVariables.Count() == 0 && index < parts.Length)
+                while (possibleVariables.Count() == 0 && index < parts.Count)
                 {
-                    possibleVariables = context.DeclaredVariables.Where(var => var.StartsWith(parts[index])).ToList();
+                    possibleVariables = context.DeclaredVariables.Where(var => var.StartsWith(parts[index].Value)).ToList();
                     index++;
                 }
-                if (index <= parts.Length)
+                if (index <= parts.Count)
                 {
-                    var possibleMatchIndex = index - 1;
+                    var possibleMatchIndex = --index;
 
-                    var possibleMatch = parts[possibleMatchIndex];
+                    var possibleVar = parts[possibleMatchIndex].Value;
                     index++;
-                    while (!possibleVariables.Contains(possibleMatch) && possibleVariables.Count() > 0 && index < parts.Length)
+                    while (!possibleVariables.Contains(possibleVar) && possibleVariables.Count() > 0 && index < parts.Count)
                     {
-                        possibleMatch = string.Format("{0} {1}", possibleMatch, parts[index++]);
-                        possibleVariables = possibleVariables.Where(var => var.StartsWith(possibleMatch));
+                        possibleVar = string.Format("{0} {1}", possibleVar, parts[index++].Value);
+                        possibleVariables = possibleVariables.Where(var => var.StartsWith(possibleVar));
                     }
-                    if (context.Exists(possibleMatch))
+                    if (context.Exists(possibleVar))
                     {
-                        var actualVar = context.Get(possibleMatch);
+                        var actualVar = context.Get(possibleVar);
                         string result;
                         if (actualVar.IsString)
                             result = string.Format("\"{0}\"", actualVar.Data);
                         else
                             result = actualVar.Data.ToString();
-                        var match = Regex.Match(expression, string.Format("\\b{0}\\b",possibleMatch));
-                        expression = string.Format("{0}{1}{2}", expression.Substring(0, match.Index), result, expression.Substring(match.Index + match.Length));
+                        expression = string.Format("{0}{1}{2}", expression.Substring(0, parts[possibleMatchIndex].Index), result, expression.Substring(parts[possibleMatchIndex].Index + possibleVar.Length));
+                        parts = Regex.Matches(expression, "(?<= ?)\\S*(?= ?)");
                     }
                     index = possibleMatchIndex + 1;
                 }
