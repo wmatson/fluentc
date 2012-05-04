@@ -23,6 +23,10 @@ namespace FluentCEngine.Constructs
                 {
                     return decimal.Parse(_data);
                 }
+                if (IsCondition)
+                {
+                    return bool.Parse(_data);
+                }
                 return _data;
             }
 
@@ -31,6 +35,10 @@ namespace FluentCEngine.Constructs
                 if (((string)value.ToString()).IsNumber())
                 {
                     Type = VarType.Number;
+                }
+                else if (((string)value.ToString()).IsCondition())
+                {
+                    Type = VarType.Condition;
                 }
                 else
                 {

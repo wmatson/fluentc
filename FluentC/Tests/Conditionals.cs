@@ -314,8 +314,9 @@ namespace Tests
             Assert.AreEqual(1M, Engine.GetValue("x"));
             Parser.Run("Let y be 2. Let x be 2. If x = y, Let y be y * x.");
             Assert.AreEqual(4M, Engine.GetValue("y"));
-            Parser.Run("Let condition be 3 = 3. If condition, Let y be 7. Let condition be it is not the case that condition. If it is not the case that condition, Let x be 7.");
+            Parser.Run("Let condition be 3 = 3. If condition, Let y be 7.");
             Assert.AreEqual(7M, Engine.GetValue("y"));
+            Parser.Run("Let condition be !condition. If it is not the case that condition, Let x be 7.");
             Assert.AreEqual(7M, Engine.GetValue("x"));
 
         }

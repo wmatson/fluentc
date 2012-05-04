@@ -86,9 +86,9 @@ namespace Tests
             Assert.IsFalse(Engine.Exists("y"));
             Parser.Run("How to decrement with y: Let y be y - 1.");
             Assert.IsFalse(Engine.Exists("y"));
-            Parser.Run("decrement 3.");
+            Parser.Run("decrement x.");
             Assert.IsFalse(Engine.Exists("y"));
-            Parser.Run("decrement with 3.");
+            Parser.Run("decrement with x.");
             Assert.IsFalse(Engine.Exists("y"));
 
             Assert.IsFalse(Engine.Exists("result"));

@@ -43,6 +43,7 @@
     <Compile Include="Constructs\NativeValuedFunction.cs" />
     <Compile Include="Constructs\NativeVoidFunction.cs" />
     <Compile Include="Constructs\ParameterMetaData.cs" />
+    <Compile Include="Exceptions\InvalidFunctionException.cs" />
     <Compile Include="Interfaces\ValuedFunction.cs" />
     <Compile Include="Interfaces\VoidFunction.cs" />
     <Compile Include="Exceptions\DuplicateNameException.cs" />

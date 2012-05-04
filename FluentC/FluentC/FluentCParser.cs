@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using FluentCEngine.Helpers;
 using FluentCEngine.Constructs;
 using System.Speech.Synthesis;
+using FluentCEngine.Exceptions;
 
 namespace FluentC
 {
@@ -17,7 +18,7 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )?|(?:([^,]+), )?)\\b([^,\\.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*)?[\\.;])([^\\.]*?!)?";
+        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )?|(?:([^,]+), )?)\\b([^,<>=\\.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*)?[\\.;])([^\\.]*?!)?";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
@@ -38,7 +39,7 @@ namespace FluentC
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
         private const string PARENTHESIZED_EXPRESSION = "\\(([^()]*)\\)";
-        private const string EXPRESSION_TYPE_SPLITTER = "(?:((?:-?\\d*\\.?\\d+|\"[^\"]*\") (?:is larger than|is smaller than|is the same as|[><=]) (?:-?\\d*\\.?\\d+|\"[^\"]*\"))|(-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+(?! [><=]))*)|(?:\"(.+?)\")| \\+ |(?:\\b([^\\.;]+)))";
+        private const string EXPRESSION_TYPE_SPLITTER = "(?:((?:(?:-?\\d*\\.?\\d+|\"[^\"]*\") (?:is larger than|is smaller than|is the same as|[><=]) (?:-?\\d*\\.?\\d+|\"[^\"]*\"))|(?:(?:True)|(?:False)))|(-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+(?! [><=]))*)|(?:\"(.+?)\")| \\+ |(?:\\b([^\\.;]+)))";
         private const int CONDITIONAL_EXPRESSION_GROUP = 1;
         private const int NUMERICAL_EXPRESSION_GROUP = 2;
         private const int STRING_EXPRESSION_GROUP = 3;
@@ -203,6 +204,14 @@ namespace FluentC
                     else
                         PrimaryEngine.DeclareValuedFunction(functionName, new FluentCValuedFunction(script, match.Groups[RETURN_EXPRESSION_GROUP].Value, PrimaryEngine, parameters.ToArray()));
                     break;
+                case CONDITIONAL_STATEMENT_KEYWORD:
+                    bool condition = EvaluateExpression(match.Groups[CONDITION_GROUP].Value);
+                    if (condition)
+                    {
+                        string conditionalScript = statement.Substring(match.Groups[CONDITION_GROUP].Index + match.Groups[CONDITION_GROUP].Length + 1);
+                        RunBlock(conditionalScript);
+                    }
+                    break;
                 default://function invocation
                     ParseFunctionInvocation(statement);
                     break;
@@ -214,12 +223,19 @@ namespace FluentC
             var functionName = statement.Split(',', '.', ';')[0];
             while (!string.IsNullOrWhiteSpace(functionName) && !Contexts.Any( e => e.FunctionExists(functionName)))
             {
-                functionName = functionName.Substring(0, functionName.LastIndexOf(' '));
+                if (functionName.Contains(' '))
+                {
+                    functionName = functionName.Substring(0, functionName.LastIndexOf(' '));
+                }
+                else
+                {
+                    throw new InvalidFunctionException(statement);
+                }
             }
             if (!string.IsNullOrWhiteSpace(functionName))
             {
                 var parameterString = Regex.Match(statement, string.Format("(?:.{{{0}}})(?: with)? ?(.*)[\\.;]?",functionName.Length)).Groups[1].Value;
-                var parameters = parameterString.Split(',')
+                var parameters = Regex.Split(parameterString,",|\\.$")
                         .Where(s => !string.IsNullOrWhiteSpace(s) && s != ".")
                         .Select( s=> EvaluateExpression(s, Contexts.ToArray()))
                         .ToArray();
