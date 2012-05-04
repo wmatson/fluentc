@@ -18,13 +18,14 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )?|(?:([^,]+), )?)\\b([^,<>=\\.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*)?[\\.;])([^\\.]*?!)?";
+        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.]+)(?:,|\\.\\.\\.) ))?\\b([^,<>=\\.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?[\\.;])([^\\.]*?!)?";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
         private const string DELETION_KEYWORD = "Forget";
         private const string FUNCTION_DECLARATION_KEYWORD = "How";
         private const string CONDITIONAL_STATEMENT_KEYWORD = "If";
+        private const string WHILE_LOOP_KEYWORD = "While";
         private const string VOID_FUNCTION_FLAG = "to ";
         private const string VALUED_FUNCTION_FLAG = "to know ";
         private const int KEYWORD_GROUP = 1;
@@ -53,8 +54,6 @@ namespace FluentC
         private const string NOT_WORDING = "it is not the case that";
 
         #endregion
-
-
 
         private Engine PrimaryEngine { get { return Contexts.First(); } }
         private IEnumerable<Engine> Contexts { get; set; }
@@ -144,7 +143,7 @@ namespace FluentC
         /// <param name="script">the script to run</param>
         public void Run(string script)
         {
-            var matches = Regex.Matches(script, "\\b([^?]|\"[^\"]*\")*?[\\.]([^\\.]*?!)?(\\s+|$)", RegexOptions.Multiline);
+            var matches = Regex.Matches(script, "\\b([^?]|\"[^\"]*\")*?(?<!\\.)[\\.](?!\\.)([^\\.]*?!)?(\\s+|$)", RegexOptions.Multiline);
             for (int i = 0; i < matches.Count; i++ )
             {
                 var match = matches[i];
@@ -210,6 +209,13 @@ namespace FluentC
                     {
                         string conditionalScript = statement.Substring(match.Groups[CONDITION_GROUP].Index + match.Groups[CONDITION_GROUP].Length + 1);
                         RunBlock(conditionalScript);
+                    }
+                    break;
+                case WHILE_LOOP_KEYWORD:
+                    string whileScript = statement.Substring(match.Groups[CONDITION_GROUP].Index + match.Groups[CONDITION_GROUP].Length + 1);
+                    while (EvaluateExpression(match.Groups[CONDITION_GROUP].Value))
+                    {
+                        RunBlock(whileScript);
                     }
                     break;
                 default://function invocation
