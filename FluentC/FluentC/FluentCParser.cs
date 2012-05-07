@@ -143,11 +143,32 @@ namespace FluentC
         /// <param name="script">the script to run</param>
         public void Run(string script)
         {
-            var matches = Regex.Matches(script, "\\b([^?]|\"[^\"]*\")*?(?<!\\.)[\\.](?!\\.|(?:[^\"]*\"(?![^\"]*\")))([^\\.]*?!)?(\\s+|$)", RegexOptions.Multiline);
-            for (int i = 0; i < matches.Count; i++ )
+            bool inString = false;
+            char endChar = (script.StartsWith("How to know")) ? '!' : '.';
+            int index = 0;
+            while (index < script.Length)
             {
-                var match = matches[i];
-                ParseStatement(match.Value);
+                
+                if (script[index] == '\"')
+                    inString = !inString;
+                if (!inString && script[index] == endChar)
+                    if ((index + 1 >= script.Length || !Regex.IsMatch(script[index + 1].ToString(), "\\.|\\d")) && (index - 1 <= 0 || script[index - 1] != '.'))
+                    {
+                        var statement = script.Substring(0, index + 1);
+                        ParseStatement(statement);
+                        script = script.Substring(index + 1).Trim();
+                        index = 0;
+                        endChar = (script.StartsWith("How to know")) ? '!' : '.';
+                        continue;
+                    }
+                if (!inString && script[index] == '?' && index + 1 < script.Length)
+                {
+                    script = script.Substring(index + 1).Trim();
+                    index = 0;
+                    endChar = (script.StartsWith("How to know")) ? '!' : '.';
+                    continue;
+                }
+                index++;
             }
         }
 
@@ -157,11 +178,29 @@ namespace FluentC
         /// <param name="script">the script to run</param>
         public void RunBlock(string script)
         {
-            var matches = Regex.Matches(script, "\\b[^?]*?[;\\.](?!(?:[^\"]*\"(?![^\"]*\"))|\\d)");
-            for (int i = 0; i < matches.Count; i++)
+            bool inString = false;
+            int index = 0;
+            while (index < script.Length)
             {
-                var match = matches[i];
-                ParseStatement(match.Value);
+
+                if (script[index] == '\"')
+                    inString = !inString;
+                if (!inString && (script[index] == ';' || script[index] == '.'))
+                    if ((index + 1 >= script.Length || !Regex.IsMatch(script[index + 1].ToString(), "\\.|\\d")) && (index - 1 <= 0 || script[index - 1] != '.'))
+                    {
+                        var statement = script.Substring(0, index + 1);
+                        ParseStatement(statement);
+                        script = script.Substring(index + 1).Trim();
+                        index = 0;
+                        continue;
+                    }
+                if (!inString && script[index] == '?' && index + 1 < script.Length)
+                {
+                    script = script.Substring(index + 1).Trim();
+                    index = 0;
+                    continue;
+                }
+                index++;
             }
         }
 
@@ -199,7 +238,7 @@ namespace FluentC
                 case FUNCTION_DECLARATION_KEYWORD:
                     IEnumerable<ParameterMetaData> parameters = match.Groups[DECLARATION_PARAMETER_GROUP].Value.Split(',').Select(s => s.Trim()).Select(s => new ParameterMetaData(s));
                     var functionName = match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value;
-                    var script = statement.Substring(match.Groups[SCRIPT_PART_GROUP].Index);//match.Groups[SCRIPT_PART_GROUP].Value;
+                    var script = statement.Substring(match.Groups[SCRIPT_PART_GROUP].Index + 1).Trim();
                     if(match.Groups[FUNCTION_DECLARATION_FLAG_GROUP].Value == VOID_FUNCTION_FLAG)
                         PrimaryEngine.DeclareVoidFunction(functionName,new FluentCVoidFunction(script,PrimaryEngine, parameters.ToArray()));
                     else
@@ -209,12 +248,12 @@ namespace FluentC
                     bool condition = EvaluateExpression(match.Groups[CONDITION_GROUP].Value);
                     if (condition)
                     {
-                        string conditionalScript = statement.Substring(match.Groups[CONDITION_GROUP].Index + match.Groups[CONDITION_GROUP].Length + 1);
+                        string conditionalScript = statement.Substring(match.Groups[CONDITION_GROUP].Index + match.Groups[CONDITION_GROUP].Length + 1).Trim();
                         RunBlock(conditionalScript);
                     }
                     break;
                 case WHILE_LOOP_KEYWORD:
-                    string whileScript = statement.Substring(match.Groups[CONDITION_GROUP].Index + match.Groups[CONDITION_GROUP].Length + 1);
+                    string whileScript = statement.Substring(match.Groups[CONDITION_GROUP].Index + match.Groups[CONDITION_GROUP].Length + 1).Trim();
                     while (EvaluateExpression(match.Groups[CONDITION_GROUP].Value))
                     {
                         RunBlock(whileScript);

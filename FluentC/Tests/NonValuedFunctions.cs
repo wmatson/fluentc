@@ -119,9 +119,9 @@ namespace Tests
             Parser.Run("do concatenation stuff.");
             Assert.AreEqual("something with: in it 3.4 Hello", Engine.GetValue("randomVar"));
 
-            Parser.Run("Let randomVar be 5. How to do other concatenation stuff: Let randomVar be 5 + randomVar; Let randomVar be \"something with . in it \" + 3.4.");
+            Parser.Run("Let randomVar be 5. How to do other concatenation stuff: Let randomVar be 5 + randomVar; Let randomVar be \"something with . in it \" + 3.4 + \" Hello\".");
             Parser.Run("do other concatenation stuff.");
-            Assert.AreEqual("something with . in it 3.4", Engine.GetValue("randomVar"));
+            Assert.AreEqual("something with . in it 3.4 Hello", Engine.GetValue("randomVar"));
         }
     }
 }
