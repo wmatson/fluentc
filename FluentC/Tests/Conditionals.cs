@@ -274,7 +274,7 @@ namespace Tests
         {
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (5 is the same as 3)"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (1 is the same as .1)"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (-1 is the same as -1.2"));
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (-1 is the same as -1.2)"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (1.0 is the same as -1)"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("it is not the case that (1.0 is the same as -.1)"));
 
@@ -290,7 +290,7 @@ namespace Tests
         {
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(5 is the same as 3)"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(1 is the same as .1)"));
-            Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(-1 is the same as -1.2"));
+            Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(-1 is the same as -1.2)"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(1.0 is the same as -1)"));
             Assert.IsTrue((bool)Evaluator.EvaluateExpression("!(1.0 is the same as -.1)"));
 

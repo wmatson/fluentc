@@ -18,7 +18,7 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.]+)(?:,|\\.\\.\\.) ))?\\b([^,<>=\\.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?[\\.;])([^\\.]*?!)?";
+        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.]+)(?:,|\\.\\.\\.) ))?\\b([^,!<>=\\.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?[\\.;])([^\\.]*?!)?";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
@@ -40,7 +40,7 @@ namespace FluentC
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
         private const string PARENTHESIZED_EXPRESSION = "\\(([^()]*)\\)";
-        private const string EXPRESSION_TYPE_SPLITTER = "(?:((?:(?:-?\\d*\\.?\\d+|\"[^\"]*\") (?:is larger than|is smaller than|is the same as|[><=]) (?:-?\\d*\\.?\\d+|\"[^\"]*\"))|(?:(?:True)|(?:False)))|(-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+(?! [><=]))*)|(?:\"(.+?)\")| \\+ |(?:\\b([^\\.;]+)))";
+        private const string EXPRESSION_TYPE_SPLITTER = "(?:((?:(?:-?\\d*\\.?\\d+|\"[^\"]*\") (?:is larger than|is smaller than|is the same as|[><=]) (?:-?\\d*\\.?\\d+|\"[^\"]*\"))|(?:(?:(?:!|it is not the case that ?)?True)|(?:(?:!|it is not the case that ?)?False)))|(-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+(?! [><=]))*)|(?:\"(.+?)\")| \\+ |(?:\\b([^\\.;]+)))";
         private const int CONDITIONAL_EXPRESSION_GROUP = 1;
         private const int NUMERICAL_EXPRESSION_GROUP = 2;
         private const int STRING_EXPRESSION_GROUP = 3;
@@ -51,7 +51,7 @@ namespace FluentC
         private const string LESS_THAN_WORDING = "(-?\\d*\\.?\\d+|\"[^\"]*\")(?: is smaller than )(-?\\d*\\.?\\d+|\"[^\"]*\")";
         private const string GREATER_THAN_WORDING = "(-?\\d*\\.?\\d+|\"[^\"]*\")(?: is larger than )(-?\\d*\\.?\\d+|\"[^\"]*\")";
         private const string EQUALITY_WORDING = "(-?\\d*\\.?\\d+|\"[^\"]*\")(?: is the same as )(-?\\d*\\.?\\d+|\"[^\"]*\")";
-        private const string NOT_WORDING = "it is not the case that";
+        private const string NOT_WORDING = "(?:it is not the case that ?)(True|False)";
 
         #endregion
 
@@ -316,6 +316,7 @@ namespace FluentC
             expression = Regex.Replace(expression, LESS_THAN_WORDING, m => m.Groups[1].Value + " < " + m.Groups[2].Value);
             expression = Regex.Replace(expression, GREATER_THAN_WORDING, m => m.Groups[1].Value + " > " + m.Groups[2].Value);
             expression = Regex.Replace(expression, EQUALITY_WORDING, m => m.Groups[1].Value + " = " + m.Groups[2].Value);
+            expression = Regex.Replace(expression, NOT_WORDING, m => "!" + m.Groups[1].Value);
             expression = Regex.Replace(expression, "(.*?) ([<>=]) (.*)", x =>
             {
                 dynamic operand1 = x.Groups[FIRST_OPERAND_GROUP].Value.ToNumber();
@@ -331,6 +332,8 @@ namespace FluentC
                 }
                 return x.Value;
             });
+            expression = Regex.Replace(expression, "(!)(True|False)", m =>
+                (!bool.Parse(m.Groups[2].Value)).ToString());
             return expression;
         }
 
@@ -341,7 +344,7 @@ namespace FluentC
 
         private static string SubstituteVariables(string expression, Engine context)
         {
-            var parts = Regex.Matches(expression, "(?<= |^)\\S*(?= |$)");// Split(' ').Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
+            var parts = Regex.Matches(expression, "(?<= |^|!)[^\\s!]+(?= |$)");
             int index = 0;
             while (index < parts.Count)
             {
