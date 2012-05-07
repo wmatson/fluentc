@@ -106,6 +106,22 @@ namespace Tests
 
             Parser.Run("add and store in result with -1.2, 6.");
             Assert.AreEqual(4.8M, Engine.GetValue("result"));
+
+            Parser.Run("Let randomVar be 5. How to do stuff: Let randomVar be 5 + randomVar; Let randomVar be 3.4.");
+            Parser.Run("do stuff.");
+            Assert.AreEqual(3.4M, Engine.GetValue("randomVar"));
+
+            Parser.Run("Let randomVar be 5. How to do other stuff: Let randomVar be 5 + randomVar; Let randomVar be 3.4 + \" Hello\".");
+            Parser.Run("do other stuff.");
+            Assert.AreEqual("3.4 Hello", Engine.GetValue("randomVar"));
+
+            Parser.Run("Let randomVar be 5. How to do concatenation stuff: Let randomVar be 5 + randomVar; Let randomVar be \"something with: in it \" + 3.4 + \" Hello\".");
+            Parser.Run("do concatenation stuff.");
+            Assert.AreEqual("something with: in it 3.4 Hello", Engine.GetValue("randomVar"));
+
+            Parser.Run("Let randomVar be 5. How to do other concatenation stuff: Let randomVar be 5 + randomVar; Let randomVar be \"something with . in it \" + 3.4.");
+            Parser.Run("do other concatenation stuff.");
+            Assert.AreEqual("something with . in it 3.4", Engine.GetValue("randomVar"));
         }
     }
 }

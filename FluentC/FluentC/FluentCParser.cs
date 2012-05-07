@@ -18,7 +18,7 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.]+)(?:,|\\.\\.\\.) ))?\\b([^,!<>=\\.;?\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?[\\.;])([^\\.]*?!)?";
+        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.]+)(?:,|\\.\\.\\.) ))?\\b([^,!<>=\\.;?:\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?[\\.;])([^\\.]*?!)?";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
@@ -143,7 +143,7 @@ namespace FluentC
         /// <param name="script">the script to run</param>
         public void Run(string script)
         {
-            var matches = Regex.Matches(script, "\\b([^?]|\"[^\"]*\")*?(?<!\\.)[\\.](?!\\.)([^\\.]*?!)?(\\s+|$)", RegexOptions.Multiline);
+            var matches = Regex.Matches(script, "\\b([^?]|\"[^\"]*\")*?(?<!\\.)[\\.](?!\\.|(?:[^\"]*\"(?![^\"]*\")))([^\\.]*?!)?(\\s+|$)", RegexOptions.Multiline);
             for (int i = 0; i < matches.Count; i++ )
             {
                 var match = matches[i];
@@ -157,7 +157,7 @@ namespace FluentC
         /// <param name="script">the script to run</param>
         public void RunBlock(string script)
         {
-            var matches = Regex.Matches(script, "\\b[^?]*?[\\.;]");
+            var matches = Regex.Matches(script, "\\b[^?]*?[;\\.](?!(?:[^\"]*\"(?![^\"]*\"))|\\d)");
             for (int i = 0; i < matches.Count; i++)
             {
                 var match = matches[i];
@@ -171,7 +171,7 @@ namespace FluentC
         /// <param name="filename">the name of the file to run as a script</param>
         public void RunFile(string fileName)
         {
-            Run(File.ReadAllText(fileName));
+            Run(Regex.Replace(File.ReadAllText(fileName),"\r?\n", " "));
         }
 
         private void ParseStatement(string statement)
@@ -183,7 +183,9 @@ namespace FluentC
                     if (match.Groups[VARIABLE_DECLARATION_FLAG_GROUP].Value == ASSIGNMENT_KEYWORD)
                     {
                         var variableContext = GetVariableContext(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
-                        variableContext.Assign(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value, EvaluateExpression(match.Groups[ASSIGNMENT_EXPRESSION_GROUP].Value));
+                        var expression = statement.Substring(match.Groups[ASSIGNMENT_EXPRESSION_GROUP].Index);
+                        expression = Regex.Replace(expression, "(?:\\.|;)\\s*$", "");
+                        variableContext.Assign(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value, EvaluateExpression(expression));
                     }
                     else if (match.Groups[VARIABLE_DECLARATION_FLAG_GROUP].Value == DECLARATION_KEYWORD)
                     {
@@ -197,7 +199,7 @@ namespace FluentC
                 case FUNCTION_DECLARATION_KEYWORD:
                     IEnumerable<ParameterMetaData> parameters = match.Groups[DECLARATION_PARAMETER_GROUP].Value.Split(',').Select(s => s.Trim()).Select(s => new ParameterMetaData(s));
                     var functionName = match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value;
-                    var script = match.Groups[SCRIPT_PART_GROUP].Value;
+                    var script = statement.Substring(match.Groups[SCRIPT_PART_GROUP].Index);//match.Groups[SCRIPT_PART_GROUP].Value;
                     if(match.Groups[FUNCTION_DECLARATION_FLAG_GROUP].Value == VOID_FUNCTION_FLAG)
                         PrimaryEngine.DeclareVoidFunction(functionName,new FluentCVoidFunction(script,PrimaryEngine, parameters.ToArray()));
                     else
