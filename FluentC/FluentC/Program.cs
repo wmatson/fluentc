@@ -65,6 +65,10 @@ namespace FluentC
             tellme.SpeechRecognized += recognizer_SpeechRecognized;
             recognizer.LoadGrammar(tellme);
 
+            Grammar songChoice = new Grammar(new GrammarBuilder("Play me a song"));
+            songChoice.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(songChoice_SpeechRecognized);
+            recognizer.LoadGrammar(songChoice);
+
             
             string entry = "";
             while (entry != "exit?")
@@ -74,6 +78,14 @@ namespace FluentC
                 Run(entry);
             }
             recognizer.Dispose();
+        }
+
+        static void songChoice_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
+        {
+            Console.WriteLine("Playing Song...");
+            Run("Play me a song.");
+            Console.WriteLine("Song Ended.");
+            Console.Write(">");
         }
 
         static void operation_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
@@ -91,6 +103,7 @@ namespace FluentC
             text += ".";
             Console.WriteLine(text);
             Run(text);
+            Console.Write(">");
         }
 
         static void recognizer_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
@@ -99,6 +112,7 @@ namespace FluentC
             text +=  e.Result.Text + ".";
             Console.WriteLine(text);
             Run(text);
+            Console.Write(">");
         }
 
         static void Run(string entry)

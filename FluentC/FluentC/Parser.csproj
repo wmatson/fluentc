@@ -71,6 +71,10 @@
       <Project>{BD61A20F-B5FD-409B-881B-B83C64844480}</Project>
       <Name>Engine</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MusicMaker\MusicMaker.csproj">
+      <Project>{D1BFA4A6-4538-44A8-8745-3EA39EB60A68}</Project>
+      <Name>MusicMaker</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0,Profile=Client">

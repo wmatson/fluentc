@@ -18,9 +18,9 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.]+)(?:,|\\.\\.\\.) ))?\\b([^,!<>=\\.;?:\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?(?:\\.\\.\\.Until ([^.]+))?[\\.;])([^\\.]*?!)?";
+        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.]+)(?::|,|\\.\\.\\.) ))?\\b([^,!<>=\\.;?:\"+/*-]+?)\\b(?: (be (?![+/*])|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?(?:\\.\\.\\.Until ([^.]+))?[\\.;])([^\\.]*?!)?";
         private const string DECLARATION_KEYWORD = "exist";
-        private const string ASSIGNMENT_KEYWORD = "be";
+        private const string ASSIGNMENT_KEYWORD = "be ";
         private const string MODIFICATION_KEYWORD = "Let";
         private const string DELETION_KEYWORD = "Forget";
         private const string FUNCTION_DECLARATION_KEYWORD = "How";
@@ -138,6 +138,8 @@ namespace FluentC
             {
                 return parameters[0].ToString().Length;
             }, new ParameterMetaData("string")));
+
+            PrimaryEngine.DeclareVoidFunction("Play me a song", new NativeVoidFunction(parameters => MusicMaker.Music.Main(new string[0])));
         }
 
         /// <summary>
