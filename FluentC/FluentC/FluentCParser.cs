@@ -18,7 +18,7 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.]+)(?:,|\\.\\.\\.) ))?\\b([^,!<>=\\.;?:\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?[\\.;])([^\\.]*?!)?";
+        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.]+)(?:,|\\.\\.\\.) ))?\\b([^,!<>=\\.;?:\"+/*-]+?)\\b(?: (be|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?(?:\\.\\.\\.Until ([^.]+))?[\\.;])([^\\.]*?!)?";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be";
         private const string MODIFICATION_KEYWORD = "Let";
@@ -26,6 +26,8 @@ namespace FluentC
         private const string FUNCTION_DECLARATION_KEYWORD = "How";
         private const string CONDITIONAL_STATEMENT_KEYWORD = "If";
         private const string WHILE_LOOP_KEYWORD = "While";
+        private const string DO_UNTIL_KEYWORD = "Do...";
+        private const string DO_UNTIL_END_KEYWORD = "...Until ";
         private const string VOID_FUNCTION_FLAG = "to ";
         private const string VALUED_FUNCTION_FLAG = "to know ";
         private const int KEYWORD_GROUP = 1;
@@ -36,7 +38,8 @@ namespace FluentC
         private const int ASSIGNMENT_EXPRESSION_GROUP = 6;
         private const int DECLARATION_PARAMETER_GROUP = 6;
         private const int SCRIPT_PART_GROUP = 7;
-        private const int RETURN_EXPRESSION_GROUP = 8;
+        private const int UNTIL_CONDITION_GROUP = 8;
+        private const int RETURN_EXPRESSION_GROUP = 9;
         private const string VARIABLE_WITHIN_STATEMENT = "(?<!\")\\b([^,.;?\"+/*-]+)\\b(?!\")";
         private const string PARENTHESIZED_NUMERICAL_EXPRESSION = "\\((-?\\d*\\.?\\d+(?: [-+/*] -?\\d*\\.?\\d+)*)\\)";
         private const string PARENTHESIZED_EXPRESSION = "\\(([^()]*)\\)";
@@ -144,6 +147,7 @@ namespace FluentC
         public void Run(string script)
         {
             bool inString = false;
+            bool readyToEnd = !script.StartsWith(DO_UNTIL_KEYWORD);
             char endChar = (script.StartsWith("How to know")) ? '!' : '.';
             int index = 0;
             while (index < script.Length)
@@ -154,12 +158,19 @@ namespace FluentC
                 if (!inString && script[index] == endChar)
                     if ((index + 1 >= script.Length || !Regex.IsMatch(script[index + 1].ToString(), "\\.|\\d")) && (index - 1 <= 0 || script[index - 1] != '.'))
                     {
-                        var statement = script.Substring(0, index + 1);
-                        ParseStatement(statement);
-                        script = script.Substring(index + 1).Trim();
-                        index = 0;
-                        endChar = (script.StartsWith("How to know")) ? '!' : '.';
-                        continue;
+                        if (readyToEnd)
+                        {
+                            var statement = script.Substring(0, index + 1);
+                            ParseStatement(statement);
+                            script = script.Substring(index + 1).Trim();
+                            index = 0;
+                            endChar = (script.StartsWith("How to know")) ? '!' : '.';
+                            continue;
+                        }
+                        else
+                        {
+                            readyToEnd = true;
+                        }
                     }
                 if (!inString && script[index] == '?' && index + 1 < script.Length)
                 {
@@ -258,6 +269,24 @@ namespace FluentC
                     {
                         RunBlock(whileScript);
                     }
+                    break;
+                case DO_UNTIL_KEYWORD:
+                    int scriptStart = match.Groups[KEYWORD_GROUP].Length+1;
+                    int scriptLength = 0;
+                    bool done = false; int index = scriptStart;
+                    while (!done)
+                    {
+                        done = statement.Substring(index + 1).StartsWith(DO_UNTIL_END_KEYWORD);
+                        index++;
+                        scriptLength++;
+                    }
+                    string doScript = statement.Substring(scriptStart, scriptLength);
+                    string doUntilCondition = statement.Substring(scriptStart + scriptLength + DO_UNTIL_END_KEYWORD.Length);
+                    doUntilCondition = doUntilCondition.Substring(0, doUntilCondition.Length - 1);//remove the '.'
+                    do
+                    {
+                        RunBlock(doScript);
+                    } while (!EvaluateExpression(doUntilCondition));
                     break;
                 default://function invocation
                     ParseFunctionInvocation(statement);
