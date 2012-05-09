@@ -5,12 +5,13 @@ using System.Text;
 using System.Speech;
 using System.Speech.Recognition;
 using System.Speech.Synthesis;
+using System.Threading;
 
 namespace FluentC
 {
     class Program
     {
-        static FluentCParser parser = new FluentCParser() { SpeakOnTellMe = true };
+        static FluentCParser parser = new FluentCParser() { SpeakOnTellMe = true, EchoOnCommand = false };
         static void Main(string[] args)
         {
             if (args.Length > 0)
@@ -71,7 +72,7 @@ namespace FluentC
 
             
             string entry = "";
-            while (entry != "exit?")
+            while (entry != "exit")
             {
                 Console.Write(">");
                 entry = Console.ReadLine();
@@ -82,9 +83,11 @@ namespace FluentC
 
         static void songChoice_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
-            Console.WriteLine("Playing Song...");
-            Run("Play me a song.");
-            Console.WriteLine("Song Ended.");
+            Console.WriteLine("Play me a song.");
+            new Thread(() =>
+            {
+                Run("Play me a song.");
+            }).Start();
             Console.Write(">");
         }
 

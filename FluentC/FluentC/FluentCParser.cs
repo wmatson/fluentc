@@ -18,7 +18,7 @@ namespace FluentC
     public class FluentCParser
     {
         #region regex constants
-        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.]+)(?::|,|\\.\\.\\.) ))?\\b([^,!<>=\\.;?:\"+/*-]+?)\\b(?: (be (?![+/*])|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?(?:\\.\\.\\.Until ([^.]+))?[\\.;])([^\\.]*?!)?";
+        private const string STATEMENT_GROUPING = "(.+?) (?:(to(?: know)? )|(?:([^,.\"]+)(?::|,|\\.\\.\\.) ))?\\b([^,!<>=\\.;?:\"+/*-]+?)\\b(?: (be (?![+/*])|exist|with) ?([^:]*))?((?:: [^\\.]*(?!\\.\\.))?(?:\\.\\.\\.Until ([^.]+))?[\\.;])([^\\.]*?!)?";
         private const string DECLARATION_KEYWORD = "exist";
         private const string ASSIGNMENT_KEYWORD = "be ";
         private const string MODIFICATION_KEYWORD = "Let";
@@ -78,6 +78,8 @@ namespace FluentC
                 _speakOnTellMe = value;
             }
         }
+
+        public bool EchoOnCommand { get; set; }
 
         /// <summary>
         /// Creates a new FluentCParser running on a fresh instance of Engine
@@ -139,7 +141,7 @@ namespace FluentC
                 return parameters[0].ToString().Length;
             }, new ParameterMetaData("string")));
 
-            PrimaryEngine.DeclareVoidFunction("Play me a song", new NativeVoidFunction(parameters => MusicMaker.Music.Main(new string[0])));
+            PrimaryEngine.DeclareVoidFunction("Play me a song", new NativeVoidFunction(parameters => MusicMaker.Music.Main(parameters.Select(p => p.ToString()).ToArray())));
         }
 
         /// <summary>
@@ -238,15 +240,21 @@ namespace FluentC
                         var expression = statement.Substring(match.Groups[ASSIGNMENT_EXPRESSION_GROUP].Index);
                         expression = Regex.Replace(expression, "(?:\\.|;)\\s*$", "");
                         variableContext.Assign(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value, EvaluateExpression(expression));
+                        if (EchoOnCommand)
+                            Console.WriteLine("The variable \"{0}\" is now {1}.", match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value, EvaluateExpression(expression));
                     }
                     else if (match.Groups[VARIABLE_DECLARATION_FLAG_GROUP].Value == DECLARATION_KEYWORD)
                     {
                         PrimaryEngine.Declare(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
+                        if(EchoOnCommand)
+                            Console.WriteLine("\"{0}\" was declared.", match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
                     }
                     break;
                 case DELETION_KEYWORD:
                     var varContext = GetVariableContext(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
                     varContext.Delete(match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
+                    if(EchoOnCommand)
+                        Console.WriteLine("\"{0}\" was forgotten.", match.Groups[ASSIGNMENT_VARIABLE_GROUP].Value);
                     break;
                 case FUNCTION_DECLARATION_KEYWORD:
                     IEnumerable<ParameterMetaData> parameters = match.Groups[DECLARATION_PARAMETER_GROUP].Value.Split(',').Select(s => s.Trim()).Select(s => new ParameterMetaData(s));
@@ -256,6 +264,8 @@ namespace FluentC
                         PrimaryEngine.DeclareVoidFunction(functionName,new FluentCVoidFunction(script,PrimaryEngine, parameters.ToArray()));
                     else
                         PrimaryEngine.DeclareValuedFunction(functionName, new FluentCValuedFunction(script, match.Groups[RETURN_EXPRESSION_GROUP].Value, PrimaryEngine, parameters.ToArray()));
+                    if(EchoOnCommand)
+                        Console.WriteLine("\"{0}\" was declared.", functionName);
                     break;
                 case CONDITIONAL_STATEMENT_KEYWORD:
                     bool condition = EvaluateExpression(match.Groups[CONDITION_GROUP].Value);
@@ -298,7 +308,7 @@ namespace FluentC
 
         private dynamic ParseFunctionInvocation(string statement)
         {
-            var functionName = statement.Split(',', '.', ';')[0];
+            var functionName = statement.Split('\"',',', '.', ';')[0];
             while (!string.IsNullOrWhiteSpace(functionName) && !Contexts.Any( e => e.FunctionExists(functionName)))
             {
                 if (functionName.Contains(' '))
@@ -318,6 +328,8 @@ namespace FluentC
                         .Select( s=> EvaluateExpression(s, Contexts.ToArray()))
                         .ToArray();
                 var functionContext = Contexts.First(e => e.FunctionExists(functionName));
+                if(EchoOnCommand)
+                    Console.WriteLine("Running {0}...", functionName);
                 return functionContext.RunFunction(functionName, parameters);
             }
             return null;
